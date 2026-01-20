@@ -23,6 +23,16 @@ dist-ssr
 *.sln
 *.sw?
 
+# output
+out
+dist
+*.tgz
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
 # dotenv environment variable files
 .env
 .env.development.local
