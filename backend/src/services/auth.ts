@@ -67,6 +67,9 @@ export function verifyPassword(password: string, stored: string): boolean {
   if (prefix !== PASSWORD_PREFIX) {
     return false;
   }
+  if (!saltB64 || !hashB64) {
+    return false;
+  }
   const salt = Buffer.from(saltB64, 'base64');
   const hash = Buffer.from(hashB64, 'base64');
   const candidate = scryptSync(password, salt, hash.length, SCRYPT_OPTIONS);
@@ -98,6 +101,9 @@ export function verifyAccessToken(token: string): AccessTokenPayload | null {
     return null;
   }
   const [headerB64, payloadB64, signatureB64] = parts;
+  if (!headerB64 || !payloadB64 || !signatureB64) {
+    return null;
+  }
   const unsigned = `${headerB64}.${payloadB64}`;
   const expected = createHmac('sha256', ACCESS_TOKEN_SECRET)
     .update(unsigned)
