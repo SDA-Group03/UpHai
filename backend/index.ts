@@ -1,17 +1,18 @@
 import { Elysia, t } from 'elysia';
 import { initDB, db } from "./db/index.js";
+import { cors } from '@elysiajs/cors'
 
 initDB();
 
-const app = new Elysia()
+const app = new Elysia().use(cors())
   .get('/', () => `Hello, Elysia!`)
 
-  .get('/users', () => {
+  .get('/api/users', () => {
     const users = db.query("SELECT * FROM users").all();
     return users;
   })
 
-  .post('/users', ({ body, set }) => {
+  .post('/api/users', ({ body, set }) => {
     try {
       const insertQuery = db.query("INSERT INTO users (username, password) VALUES ($username, $password)");
       
