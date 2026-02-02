@@ -46,13 +46,17 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
         return { error: 'Username already exists' };
       }
       const passwordHash = hashPassword(body.password);
-      const result = db
-        .insert(users)
+      db.insert(users)
         .values({ username, passwordHash })
         .run();
+      const created = db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.username, username))
+        .get();
       set.status = 201;
       return {
-        id: Number(result.lastInsertRowid),
+        id: created?.id ?? 0,
         username,
       };
     },

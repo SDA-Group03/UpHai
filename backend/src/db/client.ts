@@ -1,10 +1,10 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
+import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { Database } from 'bun:sqlite';
 import * as schema from './schema';
 
-// สร้าง connection ด้วย better-sqlite3
+// สร้าง connection ด้วย bun:sqlite
 const sqlite = new Database('voke.sqlite');
-sqlite.pragma('foreign_keys = ON');
+sqlite.run('PRAGMA foreign_keys = ON;');
 
 // สร้าง drizzle client
 export const db = drizzle(sqlite, { schema });

@@ -2,7 +2,7 @@ import { sqlite } from './client';
 
 export function initDB() {
   console.log("📂 Initializing Database...");
-  sqlite.exec(`
+  sqlite.run(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
