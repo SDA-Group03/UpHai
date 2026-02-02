@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from '../components/Layout'
 import { Home } from '../pages/Home'
 import { Login } from '../pages/Login'
+import { Register } from '../pages/Register'
 import { ProtectedRoute } from '../routes/ProtectedRoute'
 
 export function AppRouter() {
@@ -10,6 +11,7 @@ export function AppRouter() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />} />
           </Route>

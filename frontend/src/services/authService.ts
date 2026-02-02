@@ -62,6 +62,22 @@ export async function login(credentials: Credentials): Promise<AuthResponse> {
   }
 }
 
+export async function register(credentials: Credentials): Promise<{ id: number; username: string }> {
+  console.log('authService register called', credentials)
+  
+  try {
+    const response = await apiClient.post<{ id: number; username: string }>('/auth/register', credentials)
+    const data = response.data
+    
+    console.log('authService register successful:', data)
+    return data
+  } catch (error: any) {
+    console.error('Register failed:', error)
+    const message = error.response?.data?.error || 'Registration failed'
+    throw new Error(message)
+  }
+}
+
 export async function refreshAccessToken(): Promise<AuthResponse> {
   try {
     const response = await apiClient.post<AuthResponse>('/auth/refresh')
