@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { ModelCard } from '../components/ModelCard';
+import { ModelDetailsSheet } from '../components/ModelDetailsSheet';
 import { Search, XCircle, SlidersHorizontal } from 'lucide-react';
 import type { ModelData } from '../types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-// Mock Data (ย้ายมาจาก App.tsx เดิม)
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+//Mock Data
 const models: ModelData[] = [
   {
     id: '1',
@@ -49,20 +51,17 @@ const models: ModelData[] = [
 
 export const ModelsPage = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
+  const [selectedModel, setSelectedModel] = useState<ModelData | null>(null);
 
   return (
     <div className="flex h-full">
-      {/* Left Sidebar Filter */}
       <div className={`${isFiltersOpen ? 'w-[260px] opacity-100 mr-3' : 'w-0 opacity-0 mr-0'} hidden lg:block transition-all duration-300 overflow-hidden`}>
         <FilterSidebar />
       </div>
       
-      {/* Divider */}
-      {isFiltersOpen && <div className="w-[1px] h-full bg-slate-200 hidden lg:block transition-opacity"></div>}
+      {isFiltersOpen && <Separator orientation="vertical" className="h-full hidden lg:block mr-4" />}
 
-      {/* Right Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Search & Actions Bar */}
         <div className="mb-6 flex gap-4 items-center">
           <Button 
             variant={isFiltersOpen ? "outline" : "default"}
@@ -86,19 +85,23 @@ export const ModelsPage = () => {
           </div>
         </div>
 
-        {/* Models Grid (Scrollable) */}
-        <div className="flex-1 overflow-y-auto pr-2 pb-10 custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+        <ScrollArea className="flex-1 pr-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-10">
             {models.map((model) => (
-              <ModelCard key={model.id} data={model} />
+              <ModelCard key={model.id} data={model} onClick={() => setSelectedModel(model)} />
             ))}
-            {/* Mock duplicates */}
             {models.map((model) => (
-              <ModelCard key={`dup-${model.id}`} data={{...model, id: `dup-${model.id}`}} />
+              <ModelCard key={`dup-${model.id}`} data={{...model, id: `dup-${model.id}`}} onClick={() => setSelectedModel(model)} />
             ))}
           </div>
-        </div>
+        </ScrollArea>
       </div>
+
+      <ModelDetailsSheet 
+        model={selectedModel} 
+        isOpen={!!selectedModel} 
+        onClose={() => setSelectedModel(null)} 
+      />
     </div>
   );
 };

@@ -3,9 +3,14 @@ import type { ModelData } from '../types';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const ModelCard = ({ data }: { data: ModelData }) => {
+interface ModelCardProps {
+  data: ModelData;
+  onClick?: () => void;
+}
+
+export const ModelCard = ({ data, onClick }: ModelCardProps) => {
   return (
-    <Card className="group relative flex flex-col justify-between border-slate-100 shadow-sm hover:shadow-xl hover:border-purple-500/30 transition-all duration-300 cursor-pointer h-full hover:-translate-y-1 overflow-hidden">
+    <Card onClick={onClick} className="group relative flex flex-col justify-between border-slate-100 shadow-sm hover:shadow-xl hover:border-purple-500/30 transition-all duration-300 cursor-pointer h-full hover:-translate-y-1 overflow-hidden">
       {/* Header */}
       <CardHeader className="p-5 pb-2 flex flex-row gap-3 space-y-0">
         <div className="w-12 h-12 flex-shrink-0 p-1 bg-slate-50 rounded-lg border border-slate-100">
