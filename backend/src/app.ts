@@ -7,8 +7,10 @@ initDB();
 
 export const app = new Elysia()
   .use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'], // Include both possible Vite ports
+    origin: true, // Allow all origins in development
     credentials: true, // Important for cookies
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   }))
   .get('/', () => `Hello, Elysia!`)
   .use(authRoutes);
