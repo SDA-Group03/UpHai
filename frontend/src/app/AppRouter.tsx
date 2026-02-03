@@ -3,6 +3,7 @@ import { Layout } from '../components/Layout'
 import { Home } from '../pages/Home'
 import { Login } from '../pages/Login'
 import { Register } from '../pages/Register'
+import { ModelsPage } from '../pages/ModelsPage'
 import { ProtectedRoute } from '../routes/ProtectedRoute'
 
 export function AppRouter() {
@@ -14,6 +15,7 @@ export function AppRouter() {
           <Route path="/register" element={<Register />} /> 
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<Home />} />
+            <Route path="/models" element={<ModelsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
