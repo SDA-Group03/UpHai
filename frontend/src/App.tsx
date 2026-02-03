@@ -1,13 +1,7 @@
-import React from 'react';
-import { DashboardLayout } from './layouts/DashboardLayout';
-import { ModelsPage } from './pages/ModelsPage';
+import { AppRouter } from './app/AppRouter'
 
 function App() {
-  return (
-    <DashboardLayout>
-      <ModelsPage />
-    </DashboardLayout>
-  );
+  return <AppRouter />
 }
 
-export default App;
+export default App
