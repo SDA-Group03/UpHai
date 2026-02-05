@@ -3,7 +3,7 @@ import { FilterSidebar } from '../components/FilterSidebar';
 import { ModelCard } from '../components/ModelCard';
 import { ModelDetailsSheet } from '../components/ModelDetailsSheet';
 import { Search, XCircle, SlidersHorizontal } from 'lucide-react';
-import type { ModelData } from '../types';
+import type { ModelData } from '../lib/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
