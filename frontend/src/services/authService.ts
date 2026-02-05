@@ -1,7 +1,9 @@
 import axios, { type AxiosRequestConfig } from 'axios'
+import { useState, useEffect } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const TOKEN_KEY = 'uph_access_token'
+const USER_KEY = 'user'
 
 export type Credentials = {
   username: string
@@ -43,6 +45,24 @@ export function clearAccessToken() {
 
 export function isAuthenticated() {
   return Boolean(getAccessToken())
+}
+
+export function getCurrentUser(): Profile | null {
+  const userStr = localStorage.getItem(USER_KEY)
+  if (!userStr) return null
+  try {
+    return JSON.parse(userStr)
+  } catch {
+    return null
+  }
+}
+
+export function setCurrentUser(user: Profile) {
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+export function removeCurrentUser() {
+  localStorage.removeItem(USER_KEY)
 }
 
 export async function login(credentials: Credentials): Promise<AuthResponse> {
@@ -93,6 +113,7 @@ export async function logout(): Promise<void> {
     console.error('Logout failed:', error)
   } finally {
     clearAccessToken()
+    removeCurrentUser()
   }
 }
 
@@ -129,4 +150,19 @@ export async function fetchProfile(): Promise<Profile> {
     }
     throw error
   }
+}
+
+export function useCurrentUser() {
+  const [user, setUser] = useState<Profile | null>(null)
+
+  useEffect(() => {
+    setUser(getCurrentUser())
+  }, [])
+
+  const handleLogout = async () => {
+    await logout()
+    setUser(null)
+  }
+
+  return { user, handleLogout }
 }
