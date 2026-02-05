@@ -1,7 +1,7 @@
 import React, { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Eye } from 'lucide-react';
-import { login } from '../services/authService';
+import { login, fetchProfile, setCurrentUser } from '../services/authService';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +34,8 @@ const BrandLogo = () => (
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -48,7 +50,9 @@ export default function LoginPage() {
 
     try {
       await login({ username, password });
-      navigate('/', { replace: true });
+      const user = await fetchProfile();
+      setCurrentUser(user);
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

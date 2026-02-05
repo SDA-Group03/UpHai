@@ -1,189 +1,166 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronDown, Sparkles, Layers, Terminal, Key, BookOpen } from 'lucide-react';
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Terminal, Cpu, Zap, ArrowRight, Layers, Command, User, LogOut } from 'lucide-react';
+import { useCurrentUser } from '../services/authService';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function HomePage() {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const handleMouse = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener('mousemove', handleMouse);
-    return () => window.removeEventListener('mousemove', handleMouse);
-  }, []);
+  const location = useLocation();
+  const Navigate = useNavigate();
+  const { user, handleLogout } = useCurrentUser();
 
   return (
-    <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Background decorative crosshairs */}
-      <div className="absolute top-1/4 left-1/4 w-px h-32 bg-gradient-to-b from-purple-500/0 via-purple-500/50 to-purple-500/0" />
-      <div className="absolute top-1/4 left-1/4 w-32 h-px bg-gradient-to-r from-purple-500/0 via-purple-500/50 to-purple-500/0" />
-      <div className="absolute top-1/2 right-1/4 w-px h-40 bg-gradient-to-b from-purple-500/0 via-purple-500/50 to-purple-500/0" />
-      <div className="absolute top-1/2 right-1/4 w-40 h-px bg-gradient-to-r from-purple-500/0 via-purple-500/50 to-purple-500/0" />
-      <div className="absolute bottom-1/3 left-1/3 w-px h-24 bg-gradient-to-b from-violet-500/0 via-violet-500/40 to-violet-500/0" />
-      <div className="absolute bottom-1/3 left-1/3 w-24 h-px bg-gradient-to-r from-violet-500/0 via-violet-500/40 to-violet-500/0" />
+    <div className="min-h-screen bg-neutral-950 text-neutral-50 font-sans selection:bg-indigo-500/30">
+      
+      {/* Background Grid Pattern */}
+      <div className="fixed inset-0 z-0 h-full w-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+      
+      {/* Radial Gradient for Hero Glow */}
+      <div className="fixed left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-indigo-500 opacity-20 blur-[100px]"></div>
 
-      {/* Purple glow effects */}
-      <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-purple-500/10 blur-[80px] rounded-full" />
-      <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-purple-500/10 blur-[100px] rounded-full" />
-      <div className="absolute bottom-1/3 left-1/3 w-28 h-28 bg-violet-500/10 blur-[80px] rounded-full" />
-
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-black to-slate-950 opacity-50" />
-
-      {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-3">
-          <div className="relative group cursor-pointer">
-            <div className="absolute inset-0 bg-purple-500/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative w-10 h-10 border-2 border-white rounded-full flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+      {/* Navbar */}
+      <nav className="sticky top-0 z-50 border-b border-neutral-800 bg-neutral-950/80 backdrop-blur-md">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
+          <div className="flex items-center gap-2 font-bold tracking-tight">
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-neutral-50 text-neutral-950">
+              <Layers size={18} strokeWidth={3} />
             </div>
+            <span>UpHai</span>
           </div>
-          <div>
-            <span className="text-xl font-bold tracking-wider">UpHai</span>
-            <span className="text-xs text-gray-500 ml-2 tracking-widest uppercase">Platform</span>
+
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-neutral-400">
+            <Link to="/models" className="hover:text-neutral-50 transition-colors">Models</Link>
+            <a href="#playground" className="hover:text-neutral-50 transition-colors">Playground</a>
+            <a href="#api_key" className="hover:text-neutral-50 transition-colors">API Key</a>
+
+            <a href="#docs" className="hover:text-neutral-50 transition-colors">Docs</a>
           </div>
-        </div>
 
-        <div className="flex items-center gap-8">
-          <a href="#models" className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors">
-            <Layers className="w-4 h-4" />
-            Models
-          </a>
-          <a href="#playground" className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors">
-            <Terminal className="w-4 h-4" />
-            Playground
-          </a>
-          <a href="#api-keys" className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors">
-            <Key className="w-4 h-4" />
-            API Keys
-          </a>
-          <a href="#docs" className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors">
-            <BookOpen className="w-4 h-4" />
-            Docs
-          </a>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button className="px-6 py-2.5 text-gray-300 hover:text-white transition-colors font-medium">
-            Login
-          </button>
-          <button className="px-6 py-2.5 bg-white text-black rounded-md hover:bg-gray-200 transition-colors font-semibold">
-            Get Started
-          </button>
+          <div className="flex items-center gap-4">
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger className="outline-none">
+                  <div className="hidden sm:flex items-center gap-2 text-neutral-400 hover:text-neutral-200 transition-colors cursor-pointer">
+                    <User size={20} />
+                    <span className="text-sm font-medium text-neutral-200">{user.username}</span>
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 bg-neutral-950 border-neutral-800 text-neutral-200">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-neutral-800" />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-400 focus:text-red-400 focus:bg-neutral-900 cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+            <button
+              onClick={() => Navigate('/login', { state: { from: location } })}
+            className="h-9 px-4 bg-neutral-50 text-neutral-950 rounded font-medium text-sm hover:bg-neutral-200 transition-colors">
+              Log in
+            </button>
+              
+            )}
+          </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-[calc(100vh-88px)] px-8">
-        <div className="max-w-5xl mx-auto text-center space-y-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-purple-500/30 bg-purple-500/5 backdrop-blur-sm">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <span className="text-sm text-purple-300 tracking-wider uppercase font-medium">Model-as-a-Service</span>
-          </div>
+      <main className="relative z-10 flex flex-col items-center justify-center pt-24 pb-16 px-6 text-center">
+        
+        {/* Badge */}
+        <div className="mb-8 inline-flex items-center rounded-full border border-neutral-800 bg-neutral-900/50 px-3 py-1 text-sm text-neutral-300 backdrop-blur-sm">
+          <span className="flex h-2 w-2 rounded-full bg-indigo-500 mr-2 animate-pulse"></span>
+          v1.0 Now Public Beta
+        </div>
 
-          {/* Main Heading */}
-          <h1 className="text-7xl md:text-8xl lg:text-[7.5rem] font-bold tracking-tight leading-[0.95] pb-4">
-            Deploy AI models
-            <br />
-            <span className="bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
-              in just a few clicks
-            </span>
-          </h1>
+        {/* Headline */}
+        <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight sm:text-7xl mb-6">
+          Deploy Private AI <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 via-white to-indigo-300">
+            No GPU Required.
+          </span>
+        </h1>
 
-          {/* Subheading */}
-          <p className="text-xl md:text-2xl text-gray-400 max-w-4xl mx-auto leading-relaxed">
-            Scale seamlessly with our end-to-end infrastructure service, or deploy
-            powerful, production-ready AI models in minutes.
+        {/* Sub-headline */}
+        <p className="max-w-2xl text-lg text-neutral-400 mb-10 leading-relaxed">
+          The lightweight orchestration layer for LLMs, Vision, and Audio models. 
+          Run advanced AI containers on standard CPUs with zero latency overhead.
+        </p>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full justify-center">
+          <button 
+            onClick={() => Navigate('/models')}
+            className="h-12 px-8 bg-neutral-50 text-neutral-950 rounded-md font-semibold text-base hover:bg-neutral-200 transition-all flex items-center gap-2 w-full sm:w-auto justify-center"
+          >
+            Start Deploying <ArrowRight size={18} />
+          </button>
+          <button className="h-12 px-8 border border-neutral-700 text-neutral-300 rounded-md font-medium text-base hover:bg-neutral-900 transition-all flex items-center gap-2 w-full sm:w-auto justify-center">
+            <Terminal size={18} /> View Documentation
+          </button>
+        </div>
+
+        {/* Tech Stack Strip */}
+        <div className="mt-20 pt-10 border-t border-neutral-900 w-full max-w-5xl">
+          <p className="text-neutral-500 text-xs uppercase tracking-widest mb-6 font-semibold">
+            Powered by modern infrastructure
           </p>
-
-          {/* CTA Buttons */}
-          <div className="flex items-center justify-center gap-4 pt-6">
-            <button className="px-8 py-3.5 bg-white text-black rounded-md hover:bg-gray-200 transition-all font-semibold shadow-lg shadow-white/10 hover:shadow-white/20">
-              Deploy a model
-            </button>
-            <button className="px-8 py-3.5 bg-transparent border border-gray-700 text-white rounded-md hover:border-gray-500 hover:bg-gray-900/50 transition-all font-semibold">
-              View playground
-            </button>
-          </div>
-
-          {/* Model Types Pills */}
-          <div className="flex items-center justify-center gap-3 pt-12 flex-wrap">
-            {[
-              { name: 'Chat', color: 'from-blue-500 to-cyan-500' },
-              { name: 'Vision', color: 'from-purple-500 to-pink-500' },
-              { name: 'Voice', color: 'from-green-500 to-emerald-500' },
-              { name: 'Image', color: 'from-orange-500 to-red-500' },
-              { name: 'Container', color: 'from-indigo-500 to-violet-500' }
-            ].map((model, idx) => (
-              <div
-                key={idx}
-                className="group relative px-5 py-2.5 rounded-full border border-gray-800 bg-gray-900/30 hover:border-gray-700 transition-all cursor-pointer backdrop-blur-sm"
-              >
-                <div className={`absolute inset-0 rounded-full bg-gradient-to-r ${model.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-                <span className="relative text-sm font-medium text-gray-300 group-hover:text-white transition-colors">
-                  {model.name}
-                </span>
-              </div>
+          <div className="flex flex-wrap justify-center gap-x-12 gap-y-8 grayscale opacity-60 hover:opacity-100 transition-opacity">
+            {['Bun Runtime', 'ElysiaJS', 'Docker Engine', 'Ollama', 'React 19'].map((tech) => (
+              <span key={tech} className="text-sm font-semibold text-neutral-400 flex items-center gap-2">
+                <Command size={14} /> {tech}
+              </span>
             ))}
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-4 gap-8 max-w-3xl mx-auto pt-16 border-t border-gray-900">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-1">50+</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">Models</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-1">&lt;30s</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">Deploy Time</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-1">99.9%</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">Uptime</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white mb-1">10M+</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">API Calls</div>
-            </div>
           </div>
         </div>
       </main>
 
-      {/* Tech Stack Footer */}
-      <div className="relative z-10 border-t border-gray-900 mt-20">
-        <div className="max-w-7xl mx-auto px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-gray-600 uppercase tracking-widest">Powered by</div>
-            <div className="flex items-center gap-8">
-              {[
-                { name: 'React + Vite', icon: '⚛️' },
-                { name: 'Bun', icon: '🥟' },
-                { name: 'ElysiaJS', icon: '🦋' },
-                { name: 'Docker', icon: '🐳' }
-              ].map((tech, idx) => (
-                <div key={idx} className="flex items-center gap-2 text-gray-500 hover:text-gray-300 transition-colors cursor-default">
-                  <span className="text-lg">{tech.icon}</span>
-                  <span className="text-sm font-medium">{tech.name}</span>
-                </div>
-              ))}
+      {/* Features / Value Prop */}
+      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              icon: <Cpu className="text-indigo-400" />,
+              title: "On-Demand Compute",
+              desc: "Containers sleep when idle and wake instantly. Optimized for cost-effective CPU environments."
+            },
+            {
+              icon: <Layers className="text-purple-400" />,
+              title: "Multi-Modal Ready",
+              desc: "Orchestrate Chat, Vision, and Voice models seamlessly in a single unified API pipeline."
+            },
+            {
+              icon: <Zap className="text-amber-400" />,
+              title: "Lightning Backend",
+              desc: "Built on Bun and ElysiaJS for sub-millisecond overhead and maximum throughput."
+            }
+          ].map((feature, i) => (
+            <div key={i} className="group p-8 rounded-xl border border-neutral-800 bg-neutral-900/20 hover:bg-neutral-900/40 hover:border-neutral-700 transition-all">
+              <div className="mb-4 inline-flex p-3 rounded-lg bg-neutral-800/50 group-hover:scale-110 transition-transform">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-neutral-100">{feature.title}</h3>
+              <p className="text-neutral-400 leading-relaxed">
+                {feature.desc}
+              </p>
             </div>
-          </div>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Subtle grid overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.02] pointer-events-none"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px'
-        }}
-      />
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-neutral-900 py-12 text-center text-sm text-neutral-600">
+        <p>&copy; 2026 UpHai Platform. Engineering Project.</p>
+      </footer>
     </div>
   );
 }
