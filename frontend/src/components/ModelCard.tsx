@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ModelData } from '../types';
+import type { ModelData } from '../lib/types';
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
