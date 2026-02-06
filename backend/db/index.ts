@@ -141,6 +141,43 @@ export function seedDB() {
         description: 'Meta\'s latest iteration in the Llama 3 series, optimized for efficient on-device deployment. This 3B parameter model offers an excellent balance between quality and speed, featuring improved instruction following, better contextual understanding, and enhanced multilingual capabilities. Ideal for applications requiring reliable performance across diverse tasks including summarization, creative writing, question answering, and basic reasoning without the computational overhead of larger models.',
         icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Meta.svg'
       },
+      // ============= TOP 3 IMAGE GENERATION (CPU-OPTIMIZED) =============
+{
+  id: 'lcm-lora',
+  engine: 'stable-diffusion',
+  name: 'lcm-sd-1.5',
+  display_name: 'LCM LoRA (Ultra Fast)',
+  category: 'Image',
+  series: 'Stable Diffusion',
+  performance_tier: 'Turbo / Nano (< 3B)',
+  size_mb: 800,
+  description: 'The fastest generation method available. Enables 1-4 step generation, allowing for near real-time image creation even on modest CPUs.',
+  icon_url: 'https://stability.ai/s/images/logo.svg'
+},
+{
+  id: 'wuerstchen-cpu',
+  engine: 'stable-diffusion',
+  name: 'wuerstchen-v2',
+  display_name: 'Würstchen v2 (High-Res)',
+  category: 'Image',
+  series: 'Würstchen',
+  performance_tier: 'Balanced (3B - 7B)',
+  size_mb: 1200,
+  description: 'Highly efficient architecture designed for high-resolution 1024x1024 images. Outstanding speed-to-quality ratio on CPU-only systems.',
+  icon_url: 'https://huggingface.co/warp-ai/wuerstchen/resolve/main/wuerstchen_logo.png'
+},
+{
+  id: 'playground-v2-cpu',
+  engine: 'stable-diffusion',
+  name: 'playground-v2',
+  display_name: 'Playground v2 (Best Aesthetics)',
+  category: 'Image',
+  series: 'Playground',
+  performance_tier: 'Balanced (3B - 7B)',
+  size_mb: 3200,
+  description: 'Optimized for high aesthetic quality and vibrant colors. Excellent at human anatomy and artistic styles with mixed-precision CPU inference.',
+  icon_url: 'https://playground.com/favicon.ico'
+},
       {
         id: 'ollama-phi3-3.8b',
         engine: 'ollama',

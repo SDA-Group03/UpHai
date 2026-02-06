@@ -1,7 +1,6 @@
-import axios, { type AxiosRequestConfig } from 'axios'
+import ax from "../conf/ax"
 import { useState, useEffect } from 'react'
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
 const TOKEN_KEY = 'uph_access_token'
 const USER_KEY = 'user'
 
@@ -22,14 +21,7 @@ export type Profile = {
   username: string
 }
 
-// Create axios instance with base config
-const apiClient = axios.create({
-  baseURL: API_BASE,
-  withCredentials: true, // Important for cookies
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
+// Create axios instance wi
 
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEY)
@@ -67,7 +59,7 @@ export function removeCurrentUser() {
 
 export async function login(credentials: Credentials): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>('/auth/login', credentials)
+    const response = await ax.post<AuthResponse>('/auth/login', credentials)
     const data = response.data
     
     setAccessToken(data.accessToken)
@@ -81,7 +73,7 @@ export async function login(credentials: Credentials): Promise<AuthResponse> {
 
 export async function register(credentials: Credentials): Promise<{ id: number; username: string }> {
   try {
-    const response = await apiClient.post<{ id: number; username: string }>('/auth/register', credentials)
+    const response = await ax.post<{ id: number; username: string }>('/auth/register', credentials)
     const data = response.data
     
     return data
@@ -94,7 +86,7 @@ export async function register(credentials: Credentials): Promise<{ id: number; 
 
 export async function refreshAccessToken(): Promise<AuthResponse> {
   try {
-    const response = await apiClient.post<AuthResponse>('/auth/refresh')
+    const response = await ax.post<AuthResponse>('/auth/refresh')
     const data = response.data
     
     setAccessToken(data.accessToken)
@@ -108,7 +100,7 @@ export async function refreshAccessToken(): Promise<AuthResponse> {
 
 export async function logout(): Promise<void> {
   try {
-    await apiClient.post('/auth/logout')
+    await ax.post('/auth/logout')
   } catch (error) {
     console.error('Logout failed:', error)
   } finally {
@@ -124,7 +116,7 @@ export async function fetchProfile(): Promise<Profile> {
   }
   
   try {
-    const response = await apiClient.get<Profile>('/auth/me', {
+    const response = await ax.get<Profile>('/auth/me', {
       headers: { 
         Authorization: `Bearer ${token}` 
       },
@@ -137,7 +129,7 @@ export async function fetchProfile(): Promise<Profile> {
       try {
         await refreshAccessToken()
         const newToken = getAccessToken()
-        const response = await apiClient.get<Profile>('/auth/me', {
+        const response = await ax.get<Profile>('/auth/me', {
           headers: { 
             Authorization: `Bearer ${newToken}` 
           },
