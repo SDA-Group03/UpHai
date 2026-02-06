@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Box, MessageSquare, Image, Video, Mic, Key, CreditCard, FileText, ExternalLink, EyeClosedIcon, Eye, ScanEye, LucideScanEye } from 'lucide-react';
+import { Box, MessageSquare, Image, Mic, Key, FileText, ExternalLink, ScanEye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -95,8 +95,8 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
           <MenuItem 
             icon={ScanEye} 
             label="Vision" 
-            to="/playground/Vision"
-            active={location.pathname === '/playground/Vision'}
+            to="/playground/vision"
+            active={location.pathname === '/playground/vision'}
           />
           <MenuItem 
             icon={Mic} 
