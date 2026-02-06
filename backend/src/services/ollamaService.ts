@@ -35,7 +35,7 @@ async function ensureOllamaImage(): Promise<void> {
 /**
  * สร้าง Chat Instance (เปลี่ยนวิธี Pull Model เป็น HTTP API)
  */
-export async function createChatInstance(modelName: string = "qwen:0.5b"): Promise<ChatInstanceResult> {
+export async function createOllamaInstance(modelName: string = "qwen:0.5b"): Promise<ChatInstanceResult> {
   console.log(`🚀 เริ่มสร้างห้องแชท: ${modelName}`);
 
   try {
