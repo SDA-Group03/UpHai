@@ -14,7 +14,6 @@ function fetchModels(): Promise<ModelData[]> {
   return ax.get<{ success: boolean; data: ModelData[] }>('/models')
     .then(response => {
       if (response.data.success) {
-        console.log('Fetched models:', response.data.data);
         return response.data.data;
       } else {
         throw new Error('Failed to fetch models');

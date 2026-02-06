@@ -8,7 +8,6 @@ export const modelRoutes = new Elysia({ prefix: "/api" })
   .get("/models", async () => {
     try {
       const models = await modelService.getAllModels();
-      console.log(models);
       return {
         success: true,
         data: models,

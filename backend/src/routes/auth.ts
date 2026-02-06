@@ -27,7 +27,7 @@ const refreshCookieSchema = t.Object({
   [REFRESH_TOKEN_COOKIE_NAME]: t.Optional(t.String({ minLength: 20 })),
 });
 
-export const authRoutes = new Elysia({ prefix: '/auth' })
+export const authRoutes = new Elysia({ prefix: '/api/auth' })
   .post(
     '/register',
     ({ body, set }) => {

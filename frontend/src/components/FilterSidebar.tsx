@@ -49,7 +49,7 @@ export const FilterSidebar = () => {
         <FilterGroup
           value="performance"
           title="Performance"
-          options={["Turbo / Nano (< 3B)", "Balanced (3B - 7B)", "High Precision (> 8B)"]}
+          options={["Turbo / Nano", "Balanced", "High Precision"]}
         />
       </Accordion>
     </ScrollArea>

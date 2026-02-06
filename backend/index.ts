@@ -1,3 +1,4 @@
+import { initDB, seedDB } from './db/index.js';
 import { app } from './src/app.js';
 import { PORT } from './src/config/env.js';
 
