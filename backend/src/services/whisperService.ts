@@ -17,7 +17,7 @@ export interface WhisperInstanceResult {
  * Pull Whisper Docker Image
  */
 async function ensureWhisperImage(): Promise<void> {
-  const imageName = "onerahmet/openai-whisper-asr-webservice:latest";
+  const imageName = "fedirz/faster-whisper-server:latest-cpu";
   try {
     await docker.getImage(imageName).inspect();
     console.log(`✅ Image ${imageName} exists`);
@@ -47,7 +47,7 @@ export async function createWhisperInstance(
 
     // Create and start container
     const container = await docker.createContainer({
-      Image: "onerahmet/openai-whisper-asr-webservice:latest",
+      Image: "fedirz/faster-whisper-server:latest-cpu",
       Env: [`ASR_MODEL=${modelName}`, `ASR_ENGINE=openai_whisper`],
       Tty: true,
       HostConfig: {

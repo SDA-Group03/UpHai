@@ -14,15 +14,16 @@ export interface SDInstanceResult {
 }
 
 /**
- * Pull Stable Diffusion Docker Image
+ * Pull Stable Diffusion Image (FastSD CPU Version)
+ * ตัวนี้เบากว่าและออกแบบมาเพื่อ CPU โดยเฉพาะ
  */
 async function ensureSDImage(): Promise<void> {
-  const imageName = "stabilityai/stable-diffusion:latest";
+  const imageName = "rupeshs/fastsdcpu:latest";
   try {
     await docker.getImage(imageName).inspect();
     console.log(`✅ Image ${imageName} exists`);
   } catch (error) {
-    console.log(`📥 Pulling ${imageName}...`);
+    console.log(`📥 Pulling ${imageName} (Optimized for CPU)...`);
     await new Promise<void>((resolve, reject) => {
       docker.pull(imageName, (err: any, stream: any) => {
         if (err) return reject(err);
@@ -34,57 +35,49 @@ async function ensureSDImage(): Promise<void> {
 }
 
 /**
- * Create Stable Diffusion Instance
- * Models: sdxl-turbo, sd-1.5, playground-v2, etc.
+ * Create Stable Diffusion Instance (CPU Only)
  */
 export async function createSDInstance(
   modelName: string = "sdxl-turbo"
 ): Promise<SDInstanceResult> {
-  console.log(`🎨 Creating Stable Diffusion instance: ${modelName}`);
+  console.log(`🎨 Creating SD CPU instance: ${modelName}`);
 
   try {
     await ensureSDImage();
 
-    // Determine if GPU is available
-    const useGPU = await checkGPUAvailable();
-
     const containerConfig: any = {
-      Image: "stabilityai/stable-diffusion:latest",
-      Env: [`MODEL_NAME=${modelName}`, `DEVICE=cpu`], // Default to CPU
+      Image: "universonic/stable-diffusion-webui",
+      Env: [
+        `MODEL_NAME=${modelName}`,
+        "DEVICE=cpu",
+        "USE_OPENVINO=true" // ช่วยเร่งความเร็วบน CPU
+      ],
       Tty: true,
       HostConfig: {
-        PortBindings: { "7860/tcp": [{ HostPort: "" }] }, // Random port
-        Memory: 4 * 1024 * 1024 * 1024, // 4GB for image gen
-        Binds: [`${SD_VOLUME}:/models:ro`],
+        // FastSD CPU ใช้พอร์ต 8000 เป็นหลัก
+        PortBindings: { "8000/tcp": [{ HostPort: "" }] }, 
+        // จำกัด RAM (4GB กำลังดีสำหรับ CPU mode)
+        Memory: 4 * 1024 * 1024 * 1024, 
+        // จำกัด CPU เพื่อไม่ให้เครื่องค้าง (เช่นใช้ไม่เกิน 2 คอร์)
+        CpuQuota: 200000, 
+        Binds: [`${SD_VOLUME}:/app/models:ro`],
       },
     };
-
-    // Add GPU support if available
-    if (useGPU) {
-      containerConfig.Env = [`MODEL_NAME=${modelName}`, `DEVICE=cuda`];
-      containerConfig.HostConfig.DeviceRequests = [
-        {
-          Driver: "nvidia",
-          Count: -1, // All GPUs
-          Capabilities: [["gpu"]],
-        },
-      ];
-    }
 
     const container = await docker.createContainer(containerConfig);
     await container.start();
 
     // Get assigned port
     const data = await container.inspect();
-    const hostPort = data.NetworkSettings.Ports["7860/tcp"]?.[0]?.HostPort;
+    const hostPort = data.NetworkSettings.Ports["8000/tcp"]?.[0]?.HostPort;
     if (!hostPort) throw new Error("Port not found");
 
-    console.log(`✅ SD container running on port: ${hostPort} (${useGPU ? "GPU" : "CPU"})`);
+    console.log(`✅ SD CPU container running on port: ${hostPort}`);
 
-    // Wait for service
+    // รอ Service พร้อมใช้งาน
     await waitForSD(hostPort);
 
-    console.log(`🎉 Stable Diffusion ${modelName} ready!`);
+    console.log(`🎉 Stable Diffusion ${modelName} ready! (CPU Mode)`);
 
     return { containerId: container.id, port: hostPort, model: modelName };
   } catch (error) {
@@ -94,66 +87,32 @@ export async function createSDInstance(
 }
 
 /**
- * Check if NVIDIA GPU is available
- */
-async function checkGPUAvailable(): Promise<boolean> {
-  try {
-    // Try to run nvidia-smi in a test container
-    const container = await docker.createContainer({
-      Image: "nvidia/cuda:11.8.0-base-ubuntu22.04",
-      Cmd: ["nvidia-smi"],
-      HostConfig: {
-        DeviceRequests: [
-          {
-            Driver: "nvidia",
-            Count: -1,
-            Capabilities: [["gpu"]],
-          },
-        ],
-      },
-    });
-
-    await container.start();
-    await container.wait();
-    await container.remove();
-    return true;
-  } catch (error) {
-    // GPU not available, fallback to CPU
-    return false;
-  }
-}
-
-/**
  * Wait for SD service to be ready
  */
 async function waitForSD(port: string, maxRetries = 60): Promise<void> {
-  console.log("⏳ Waiting for SD service (may take up to 2 minutes for model loading)...");
+  console.log("⏳ Waiting for SD service (CPU loading might take time)...");
   for (let i = 0; i < maxRetries; i++) {
     try {
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://localhost:${port}/`);
       if (response.ok) {
         console.log("✅ SD service ready");
         return;
       }
     } catch (e) {
-      // Service not ready yet
+      // Not ready
     }
     await new Promise((r) => setTimeout(r, 2000));
   }
   throw new Error("SD startup timeout");
 }
 
-/**
- * Stop and remove SD container
- */
 export async function stopSDInstance(containerId: string): Promise<void> {
   try {
     const container = docker.getContainer(containerId);
-    await container.stop({ t: 10 }); // 10 second grace period
+    await container.stop();
     await container.remove();
     console.log(`✅ SD container ${containerId} removed`);
   } catch (error) {
-    console.error("❌ Error removing SD container:", error);
-    throw error;
+    console.error("❌ Error:", error);
   }
 }

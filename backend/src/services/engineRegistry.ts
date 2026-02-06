@@ -9,9 +9,6 @@ export interface InstanceResult {
   engine: string;
 }
 
-/**
- * Create container based on engine type
- */
 export async function createContainerByEngine(
   modelName: string,
   engine: string
@@ -23,26 +20,20 @@ export async function createContainerByEngine(
       const result = await createOllamaInstance(modelName);
       return { ...result, engine: "ollama" };
     }
-
     case "whisper": {
       const result = await createWhisperInstance(modelName);
       return { ...result, engine: "whisper" };
     }
-
     case "stable-diffusion":
     case "sd": {
       const result = await createSDInstance(modelName);
       return { ...result, engine: "stable-diffusion" };
     }
-
     default:
-      throw new Error(`Engine '${engine}' not supported. Available: ollama, whisper, stable-diffusion`);
+      throw new Error(`Engine '${engine}' not supported.`);
   }
 }
 
-/**
- * Get engine configuration
- */
 export function getEngineConfig(engine: string) {
   const configs = {
     ollama: {
@@ -55,27 +46,17 @@ export function getEngineConfig(engine: string) {
       volume: process.env.WHISPER_VOLUME || "whisper-models",
       defaultPort: 9000,
       healthEndpoint: "/",
-      dockerImage: "onerahmet/openai-whisper-asr-webservice:latest",
+      dockerImage: "fedirz/faster-whisper-server:latest-cpu",
     },
     "stable-diffusion": {
       volume: process.env.SD_VOLUME || "sd-models",
-      defaultPort: 7860,
-      healthEndpoint: "/health",
-      dockerImage: "stabilityai/stable-diffusion:latest",
+      defaultPort: 8000, // อัปเดตพอร์ตเป็น 8000 สำหรับ FastSD CPU
+      healthEndpoint: "/",
+      dockerImage: "universonic/stable-diffusion-webui",
     },
   };
 
   const config = configs[engine.toLowerCase() as keyof typeof configs];
-  if (!config) {
-    throw new Error(`Unknown engine: ${engine}`);
-  }
-
+  if (!config) throw new Error(`Unknown engine: ${engine}`);
   return config;
-}
-
-/**
- * List supported engines
- */
-export function getSupportedEngines() {
-  return ["ollama", "whisper", "stable-diffusion"];
 }
