@@ -35,20 +35,22 @@ const FilterGroup = ({ value, title, options }: FilterGroupProps) => {
 export const FilterSidebar = () => {
   return (
     <ScrollArea className="h-full pr-4 pb-20 w-full">
-      <Accordion type="multiple" defaultValue={["category", "tags", "series", "context", "size"]} className="w-full">
+      <Accordion type="multiple" defaultValue={["category", "series", "performance", "capability"]} className="w-full">
         <FilterGroup
           value="category"
           title="Category"
-          options={["Chat", "Image", "Video", "Speech", "Embedding", "Reranker"]}
+          options={["Chat","Coding ", "Vision", "Audio", "Image"]}
         />
-        <FilterGroup value="tags" title="Tags" options={["VLM", "MoE", "Tools", "FIM", "Math", "Coder"]} />
         <FilterGroup
           value="series"
           title="Series"
           options={["DeepSeek", "Qwen", "Llama", "FLUX", "MiniMax", "Mistral"]}
         />
-        <FilterGroup value="context" title="Context Window" options={["≥ 8K", "≥ 16K", "≥ 32K", "≥ 128K"]} />
-        <FilterGroup value="size" title="Model Size" options={["Under 10B", "10 ~ 50B", "50 ~ 100B", "Over 100B"]} />
+        <FilterGroup
+          value="performance"
+          title="Performance"
+          options={["Turbo / Nano (< 3B)", "Balanced (3B - 7B)", "High Precision (> 8B)"]}
+        />
       </Accordion>
     </ScrollArea>
   );
