@@ -1,57 +1,58 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { ModelCard } from '../components/ModelCard';
 import { ModelDetailsSheet } from '../components/ModelDetailsSheet';
-import { Search, XCircle, SlidersHorizontal } from 'lucide-react';
+import { Search, XCircle, SlidersHorizontal, Loader2 } from 'lucide-react';
 import type { ModelData } from '../lib/types';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-//Mock Data
-const models: ModelData[] = [
-  {
-    id: '1',
-    name: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-    provider: 'meta-llama',
-    price: '0.06',
-    description: 'Meta Llama 3.1 is a family of multilingual large language models developed by Meta.',
-    tags: ['Prefix', '8B', '33K'],
-    iconUrl: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Meta.svg'
-  },
-  {
-    id: '2',
-    name: 'meta-llama/Llama-3.3-70B-Instruct',
-    provider: 'meta-llama',
-    price: '0.59',
-    description: 'Llama 3.3 is the most advanced multilingual open-source large language model in the Llama series.',
-    tags: ['Tools', '70B', '32K'],
-    iconUrl: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Meta.svg',
-    isDeprecated: true
-  },
-  {
-    id: '3',
-    name: 'Qwen/Qwen2.5-72B-Instruct',
-    provider: 'Qwen',
-    price: '0.42',
-    description: 'Qwen2.5-72B-Instruct is one of the latest large language model series released by Alibaba Cloud.',
-    tags: ['Tools', '72B', '32K'],
-    iconUrl: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png'
-  },
-  {
-    id: '4',
-    name: 'deepseek-ai/DeepSeek-V3',
-    provider: 'deepseek-ai',
-    price: '0.14',
-    description: 'DeepSeek-V3 demonstrates notable improvements over its predecessor.',
-    tags: ['MoE', 'Reasoning', '671B'],
-    iconUrl: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/DeepSeek.svg'
-  }
-];
+import ax from '@/conf/ax';
+
+function fetchModels(): Promise<ModelData[]> {
+  return ax.get<{ success: boolean; data: ModelData[] }>('/models')
+    .then(response => {
+      if (response.data.success) {
+        console.log('Fetched models:', response.data.data);
+        return response.data.data;
+      } else {
+        throw new Error('Failed to fetch models');
+      }
+    });
+}
+
 
 export const ModelsPage = () => {
+  const [models, setModels] = useState<ModelData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(true);
   const [selectedModel, setSelectedModel] = useState<ModelData | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchModels()
+      .then(data => {
+        setModels(data);
+      })
+      .catch(err => {
+        console.error('Error fetching models:', err);
+        setError(err.message || 'An unknown error occurred while fetching models.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <Loader2 className="h-8 w-8 animate-spin text-[#6E29F6]" />
+        <p className="ml-3 text-slate-500">Loading Models...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full">
@@ -85,16 +86,20 @@ export const ModelsPage = () => {
           </div>
         </div>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-10">
-            {models.map((model) => (
-              <ModelCard key={model.id} data={model} onClick={() => setSelectedModel(model)} />
-            ))}
-            {models.map((model) => (
-              <ModelCard key={`dup-${model.id}`} data={{...model, id: `dup-${model.id}`}} onClick={() => setSelectedModel(model)} />
-            ))}
+        {error ? (
+          <div className="flex-1 flex items-center justify-center text-rose-500 bg-rose-50 rounded-lg">
+            <XCircle className="mr-2" />
+            <p>Error: {error}</p>
           </div>
-        </ScrollArea>
+        ) : (
+          <ScrollArea className="flex-1 pr-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 pb-10">
+              {models.map((model) => (
+                <ModelCard key={model.id} data={model} onClick={() => setSelectedModel(model)} />
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </div>
 
       <ModelDetailsSheet 

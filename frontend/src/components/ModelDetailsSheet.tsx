@@ -26,14 +26,14 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
             <SheetHeader className="mb-6 space-y-4">
               <div className="flex items-start gap-4">
                 <div className="w-16 h-16 p-2 bg-slate-50 rounded-xl border border-slate-100 shrink-0">
-                  <img src={model.iconUrl} alt={model.provider} className="w-full h-full object-contain" />
+                  <img src={model.iconUrl ?? ''} alt={model.series ?? ''} className="w-full h-full object-contain" />
                 </div>
                 <div>
-                  <SheetTitle className="text-xl font-bold text-slate-900">{model.name}</SheetTitle>
+                  <SheetTitle className="text-xl font-bold text-slate-900">{model.displayName}</SheetTitle>
                   <SheetDescription className="flex items-center gap-2 mt-1.5">
-                    <span className="font-medium text-slate-900">{model.provider}</span>
+                    <span className="font-medium text-slate-900">{model.series}</span>
                     <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <span className="font-medium text-[#6E29F6]">${model.price} / 1M Tokens</span>
+                    <span className="font-medium text-slate-500">{model.engine}</span>
                   </SheetDescription>
                 </div>
               </div>
@@ -50,12 +50,15 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
               <Separator />
 
               <div>
-                <h4 className="text-sm font-semibold text-slate-900 mb-3">Capabilities</h4>
+                <h4 className="text-sm font-semibold text-slate-900 mb-3">Details</h4>
                 <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">Chat Completion</Badge>
-                  {model.tags.map(tag => (
-                    <Badge key={tag} variant="outline" className="text-slate-600">{tag}</Badge>
-                  ))}
+                  <Badge variant="secondary" className="bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-100">{model.category}</Badge>
+                  {model.performanceTier && (
+                    <Badge variant="outline" className="text-slate-600">{model.performanceTier}</Badge>
+                  )}
+                  {model.sizeMb > 0 && (
+                     <Badge variant="outline" className="text-slate-600">{model.sizeMb} MB</Badge>
+                  )}
                 </div>
               </div>
 

@@ -1,12 +1,15 @@
   export interface ModelData {
     id: string;
     name: string;
-    provider: string;
-    description: string;
-    price: string;
-    tags: string[];
-    iconUrl: string;
-    isDeprecated?: boolean;
+    displayName: string;
+    description: string | null;
+    category: string;
+    series: string | null;
+    performanceTier: string | null;
+    engine: string;
+    sizeMb: number;
+    iconUrl: string | null;
+    createdAt: string;
   }
 
   export interface FilterOption {
