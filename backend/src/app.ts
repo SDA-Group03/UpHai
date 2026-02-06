@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors';
 import { initDB } from './db/initDB.js';
 import { authRoutes } from './routes/auth.js';
 import { dockerRoutes } from './routes/dockerRoutes.js';
+import { modelRoutes } from './routes/modelRoutes.js';
 
 initDB();
 
@@ -16,3 +17,4 @@ export const app = new Elysia()
   .get('/', () => `Hello, Elysia!`)
   .use(authRoutes)
   .use(dockerRoutes)
+  .use(modelRoutes)
