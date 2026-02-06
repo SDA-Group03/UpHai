@@ -1,19 +1,49 @@
 import React from 'react';
-import { Box, Image, MessageSquare, Mic, Settings, Wallet, FileText, ChevronRight } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Box, MessageSquare, Image, Video, Mic, Key, CreditCard, FileText, ExternalLink, EyeClosedIcon, Eye, ScanEye, LucideScanEye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const MenuItem = ({ icon: Icon, label, active = false }: { icon: any, label: string, active?: boolean }) => (
-  <Button variant="ghost" className={`w-full justify-start gap-3 mb-1 px-4 ${active ? 'bg-[#6E29F6] text-white hover:bg-[#5b21cd] hover:text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'}`}>
-    <Icon size={16} />
-    <span className="text-sm font-medium">{label}</span>
-  </Button>
+const MenuItem = ({ 
+  icon: Icon, 
+  label, 
+  to, 
+  active = false 
+}: { 
+  icon: any; 
+  label: string; 
+  to: string; 
+  active?: boolean;
+}) => (
+  <Link to={to}>
+    <Button 
+      variant="ghost" 
+      className={`w-full justify-start gap-3 h-9 px-3 rounded-md ${
+        active 
+          ? 'bg-[#7C3AED] text-white hover:bg-[#6D28D9] hover:text-white' 
+          : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+      }`}
+    >
+      <Icon size={18} />
+      <span className="text-sm">{label}</span>
+    </Button>
+  </Link>
 );
 
-const MenuGroup = ({ title, children }: { title: string, children: React.ReactNode }) => (
-  <div className="mb-4 px-3">
-    <div className="px-4 py-2 text-xs text-slate-500 font-bold uppercase tracking-wider">{title}</div>
-    <div className="flex flex-col gap-1">{children}</div>
+const MenuGroup = ({ 
+  title, 
+  children 
+}: { 
+  title: string; 
+  children: React.ReactNode;
+}) => (
+  <div className="mb-6">
+    <div className="px-3 mb-2 text-xs text-slate-500 font-medium tracking-wide">
+      {title}
+    </div>
+    <div className="flex flex-col gap-0.5">
+      {children}
+    </div>
   </div>
 );
 
@@ -22,37 +52,88 @@ interface SidebarProps {
 }
 
 export const Sidebar = ({ isOpen }: SidebarProps) => {
+  const location = useLocation();
+
   return (
-    <aside className={`${isOpen ? 'w-[200px] translate-x-0' : 'w-0 -translate-x-full opacity-0'} bg-[#001529] h-screen flex flex-col flex-shrink-0 z-50 text-white transition-all duration-300 overflow-hidden whitespace-nowrap`}>
+    <aside 
+      className={`${
+        isOpen ? 'w-[200px] translate-x-0' : 'w-0 -translate-x-full opacity-0'
+      } bg-[#1E1E2E] h-screen flex flex-col flex-shrink-0 z-50 text-white transition-all duration-300 overflow-hidden whitespace-nowrap border-r border-slate-800`}
+    >
       {/* Logo Area */}
-      <div className="h-14 flex items-center justify-center bg-[#6E29F6]">
-        <span className="text-xl font-bold tracking-wide">UpHai</span>
+      <div className="h-14 flex items-center px-4 border-b border-slate-800">
+        <div className="flex items-center  gap-2">
+          <div className="w-6 h-6 rounded i bg-gradient-to-br from-purple-500 to-indigo-600" />
+          <span className="text-base font-semibold">UpHai</span>
+        </div>
       </div>
 
       {/* Menu Area */}
-      <ScrollArea className="flex-1 py-4">
+      <ScrollArea className="flex-1 py-4 px-2">
         <MenuGroup title="Models">
-          <MenuItem icon={Box} label="Models" active />
+          <MenuItem 
+            icon={Box} 
+            label="Models" 
+            to="/models"
+            active={location.pathname === '/models'}
+          />
         </MenuGroup>
 
         <MenuGroup title="Playground">
-          <MenuItem icon={MessageSquare} label="Chat" />
-          <MenuItem icon={Image} label="Image" />
-          <MenuItem icon={Mic} label="Audio" />
+          <MenuItem 
+            icon={MessageSquare} 
+            label="Chat" 
+            to="/playground/chat"
+            active={location.pathname === '/playground/chat'}
+          />
+          <MenuItem 
+            icon={Image} 
+            label="Image" 
+            to="/playground/image"
+            active={location.pathname === '/playground/image'}
+          />
+          <MenuItem 
+            icon={ScanEye} 
+            label="Vision" 
+            to="/playground/Vision"
+            active={location.pathname === '/playground/Vision'}
+          />
+          <MenuItem 
+            icon={Mic} 
+            label="Audio" 
+            to="/playground/audio"
+            active={location.pathname === '/playground/audio'}
+          />
         </MenuGroup>
 
         <MenuGroup title="Settings">
-          <MenuItem icon={Settings} label="API Keys" />
+          <MenuItem 
+            icon={Key} 
+            label="API Keys" 
+            to="/settings/api-keys"
+            active={location.pathname === '/settings/api-keys'}
+          />
+       
         </MenuGroup>
       </ScrollArea>
 
       {/* Footer Docs */}
-      <div className="p-4 bg-white/5 backdrop-blur-sm">
-        <Button variant="ghost" className="w-full justify-between text-slate-400 hover:text-white hover:bg-white/5">
-          <FileText size={16} />
-          <span>Docs</span>
-          <ChevronRight size={14} className="ml-auto" />
-        </Button>
+      <div className="p-3 border-t border-slate-800">
+        <a 
+          href="" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="w-full"
+        >
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-3 h-9 px-3 text-slate-300 hover:text-white hover:bg-slate-700/50"
+          >
+            <FileText size={18} />
+            <span className="text-sm">Docs</span>
+            <ExternalLink size={14} className="ml-auto" />
+          </Button>
+        </a>
       </div>
     </aside>
   );
