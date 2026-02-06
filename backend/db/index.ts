@@ -48,6 +48,7 @@ export function initDB() {
       status TEXT NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       last_activity INTEGER DEFAULT (strftime('%s', 'now')),
+      FOREIGN KEY (user_id) REFERENCES users(id),
       FOREIGN KEY (engine_id) REFERENCES engines(id),
       FOREIGN KEY (model_id) REFERENCES models(id)
     );
