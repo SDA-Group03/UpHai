@@ -38,3 +38,13 @@ export async function terminateInstances(id: string) {
     throw new Error(error.response?.data?.error || "Failed to terminate instances");
   }
 }
+
+export async function stopInstances(id: string) {
+  try {
+    const response = await ax.post(`/docker/instances/${id}/stop`);
+    return response.data;
+  } catch (error: any) {
+    console.error("stop Error:", error);
+    throw new Error(error.response?.data?.error || "Failed to stop instances");
+  }
+}

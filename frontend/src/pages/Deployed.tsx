@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 // เพิ่ม import service ที่ต้องใช้
-import { getDeployedInstances, terminateInstances } from "../services/dockerService";
+import { getDeployedInstances, terminateInstances, stopInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
 // --- TYPES ---
@@ -187,9 +187,6 @@ export default function Dashboard() {
       await terminateInstances(id);
 
       setModels((prevModels) => prevModels.filter((model) => model.id !== id));
-
-      // 3. Success: อัปเดต State หน้าเว็บ
-      alert(`Instance ${id.substring(0, 8)}... terminated successfully.`);
     } catch (err: any) {
       // 4. Error handling
       console.error("Failed to terminate:", err);
@@ -221,7 +218,8 @@ export default function Dashboard() {
     );
   };
 
-  const handleStop = (id: string) => {
+  const handleStop = async (id: string) => {
+    await stopInstances(id);
     setModels((prev) =>
       prev.map((model) => (model.id === id ? { ...model, status: "stopped" as ModelStatus, uptime: "0h" } : model)),
     );
