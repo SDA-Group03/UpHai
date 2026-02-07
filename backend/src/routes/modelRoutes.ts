@@ -78,90 +78,7 @@ export const modelRoutes = new Elysia({ prefix: "/api" })
       }),
     }
   )
-
-  // GET /api/models/category/:category - ดึง models ตาม category
-  .get(
-    "/models/category/:category",
-    async ({ params }) => {
-      try {
-        const models = await modelService.getModelsByCategory(params.category);
-
-        return {
-          success: true,
-          data: models,
-          count: models.length,
-        };
-      } catch (error) {
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch models by category"
-        );
-      }
-    },
-    {
-      params: t.Object({
-        category: t.String(),
-      }),
-    }
-  )
-
-  // GET /api/models/series/:series - ดึง models ตาม series
-  .get(
-    "/models/series/:series",
-    async ({ params }) => {
-      try {
-        const models = await modelService.getModelsBySeries(params.series);
-
-        return {
-          success: true,
-          data: models,
-          count: models.length,
-        };
-      } catch (error) {
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch models by series"
-        );
-      }
-    },
-    {
-      params: t.Object({
-        series: t.String(),
-      }),
-    }
-  )
-
-  // GET /api/models/tier/:tier - ดึง models ตาม performance tier
-  .get(
-    "/models/tier/:tier",
-    async ({ params }) => {
-      try {
-        const models = await modelService.getModelsByPerformanceTier(
-          params.tier
-        );
-
-        return {
-          success: true,
-          data: models,
-          count: models.length,
-        };
-      } catch (error) {
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch models by tier"
-        );
-      }
-    },
-    {
-      params: t.Object({
-        tier: t.String(),
-      }),
-    }
-  )
-
+ 
   // GET /api/models/search?q=llama - ค้นหา models
   .get(
     "/models/search",
@@ -196,25 +113,6 @@ export const modelRoutes = new Elysia({ prefix: "/api" })
     }
   )
 
-  // GET /api/models/with-engines - ดึง models พร้อม engine info
-  .get("/models/with-engines", async () => {
-    try {
-      const models = await modelService.getModelsWithEngines();
-
-      return {
-        success: true,
-        data: models,
-        count: models.length,
-      };
-    } catch (error) {
-      throw new Error(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch models with engines"
-      );
-    }
-  })
-
   // POST /api/models/filter - Filter models ด้วยหลายเงื่อนไข
   .post(
     "/models/filter",
@@ -246,104 +144,7 @@ export const modelRoutes = new Elysia({ prefix: "/api" })
     }
   )
 
-  // GET /api/models/small?maxSize=2000 - ดึง models ขนาดเล็ก
-  .get(
-    "/models/small",
-    async ({ query }) => {
-      try {
-        const maxSize = query.maxSize ? parseInt(query.maxSize) : 2000;
-        const models = await modelService.getSmallModels(maxSize);
 
-        return {
-          success: true,
-          data: models,
-          count: models.length,
-          maxSize,
-        };
-      } catch (error) {
-        throw new Error(
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch small models"
-        );
-      }
-    },
-    {
-      query: t.Object({
-        maxSize: t.Optional(t.String()),
-      }),
-    }
-  )
-
-  // ============= METADATA ROUTES =============
-
-  // GET /api/metadata/categories - ดึง categories ทั้งหมด
-  .get("/metadata/categories", async () => {
-    try {
-      const categories = await modelService.getCategories();
-
-      return {
-        success: true,
-        data: categories,
-        count: categories.length,
-      };
-    } catch (error) {
-      throw new Error(
-        error instanceof Error ? error.message : "Failed to fetch categories"
-      );
-    }
-  })
-
-  // GET /api/metadata/series - ดึง series ทั้งหมด
-  .get("/metadata/series", async () => {
-    try {
-      const series = await modelService.getSeries();
-
-      return {
-        success: true,
-        data: series,
-        count: series.length,
-      };
-    } catch (error) {
-      throw new Error(
-        error instanceof Error ? error.message : "Failed to fetch series"
-      );
-    }
-  })
-
-  // GET /api/metadata/tiers - ดึง performance tiers ทั้งหมด
-  .get("/metadata/tiers", async () => {
-    try {
-      const tiers = await modelService.getPerformanceTiers();
-
-      return {
-        success: true,
-        data: tiers,
-        count: tiers.length,
-      };
-    } catch (error) {
-      throw new Error(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch performance tiers"
-      );
-    }
-  })
-
-  // GET /api/metadata/stats - ดึงสถิติ models
-  .get("/metadata/stats", async () => {
-    try {
-      const countByCategory = await modelService.countModelsByCategory();
-
-      return {
-        success: true,
-        data: {
-          byCategory: countByCategory,
-        },
-      };
-    } catch (error) {
-      throw new Error(
-        error instanceof Error ? error.message : "Failed to fetch stats"
-      );
-    }
-  });
+ 
+ 
+  

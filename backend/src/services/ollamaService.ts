@@ -12,9 +12,7 @@ export interface ChatInstanceResult {
   model: string;
 }
 
-/**
- * 2. Pull Image แบบย่อ (ตัด Progress bar รกๆ ทิ้ง)
- */
+
 async function ensureOllamaImage(): Promise<void> {
   const imageName = "ollama/ollama";
   try {
@@ -32,9 +30,7 @@ async function ensureOllamaImage(): Promise<void> {
   }
 }
 
-/**
- * สร้าง Chat Instance (เปลี่ยนวิธี Pull Model เป็น HTTP API)
- */
+
 export async function createOllamaInstance(modelName: string = "qwen:0.5b"): Promise<ChatInstanceResult> {
   console.log(`🚀 เริ่มสร้างห้องแชท: ${modelName}`);
 
@@ -73,7 +69,6 @@ export async function createOllamaInstance(modelName: string = "qwen:0.5b"): Pro
   }
 }
 
-// Helper: รอให้พร้อม (เหมือนเดิมแต่ตัด comment รกๆ)
 async function waitForOllama(port: string): Promise<void> {
   for (let i = 0; i < 30; i++) {
     try {

@@ -42,44 +42,6 @@ export class ModelService {
     }
   }
 
-  // ดึง models ตาม category
-  async getModelsByCategory(category: string) {
-    try {
-      return await db
-        .select()
-        .from(models)
-        .where(eq(models.category, category));
-    } catch (error) {
-      console.error(`Error fetching models for category ${category}:`, error);
-      throw error;
-    }
-  }
-
-  // ดึง models ตาม series
-  async getModelsBySeries(series: string) {
-    try {
-      return await db
-        .select()
-        .from(models)
-        .where(eq(models.series, series));
-    } catch (error) {
-      console.error(`Error fetching models for series ${series}:`, error);
-      throw error;
-    }
-  }
-
-  // ดึง models ตาม performance tier
-  async getModelsByPerformanceTier(tier: string) {
-    try {
-      return await db
-        .select()
-        .from(models)
-        .where(eq(models.performanceTier, tier));
-    } catch (error) {
-      console.error(`Error fetching models for tier ${tier}:`, error);
-      throw error;
-    }
-  }
 
   // ค้นหา models (search by name or display_name)
   async searchModels(searchTerm: string) {
@@ -117,25 +79,6 @@ export class ModelService {
     }
   }
 
-  // ดึง model พร้อม engine info ตาม ID
-  async getModelWithEngineById(id: string) {
-    try {
-      const result = await db
-        .select({
-          model: models,
-          engine: engines,
-        })
-        .from(models)
-        .leftJoin(engines, eq(models.engine, engines.id))
-        .where(eq(models.id, id))
-        .limit(1);
-
-      return result[0] || null;
-    } catch (error) {
-      console.error(`Error fetching model with engine ${id}:`, error);
-      throw error;
-    }
-  }
 
   // Filter models ด้วยหลายเงื่อนไข
   async filterModels(filters: {
@@ -187,91 +130,7 @@ export class ModelService {
     }
   }
 
-  // ดึง unique categories
-  async getCategories() {
-    try {
-      const result = await db
-        .selectDistinct({ category: models.category })
-        .from(models);
-      
-      return result.map(r => r.category);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      throw error;
-    }
-  }
 
-  // ดึง unique series (แก้ไขส่วนนี้)
-  async getSeries() {
-    try {
-      const result = await db
-        .selectDistinct({ series: models.series })
-        .from(models)
-        .where(isNotNull(models.series)); // ใช้ isNotNull แทน eq(models.series, null)
-
-      return result.map(r => r.series).filter(Boolean);
-    } catch (error) {
-      console.error("Error fetching series:", error);
-      throw error;
-    }
-  }
-
-  // ดึง unique performance tiers
-  async getPerformanceTiers() {
-    try {
-      const result = await db
-        .selectDistinct({ tier: models.performanceTier })
-        .from(models)
-        .where(isNotNull(models.performanceTier));
-      
-      return result.map(r => r.tier).filter(Boolean);
-    } catch (error) {
-      console.error("Error fetching performance tiers:", error);
-      throw error;
-    }
-  }
-
-  // ดึง models ตามขนาด (เล็กไปใหญ่)
-  async getModelsBySize(ascending: boolean = true) {
-    try {
-      return await db
-        .select()
-        .from(models)
-        .orderBy(ascending ? asc(models.sizeMb) : desc(models.sizeMb));
-    } catch (error) {
-      console.error("Error fetching models by size:", error);
-      throw error;
-    }
-  }
-
-  // ดึง models ที่มีขนาดเล็กกว่าที่กำหนด
-  async getSmallModels(maxSizeMb: number = 2000) {
-    try {
-      return await db
-        .select()
-        .from(models)
-        .where(lte(models.sizeMb, maxSizeMb));
-    } catch (error) {
-      console.error(`Error fetching small models (< ${maxSizeMb}MB):`, error);
-      throw error;
-    }
-  }
-
-  // นับจำนวน models ตาม category
-  async countModelsByCategory() {
-    try {
-      return await db
-        .select({
-          category: models.category,
-          count: sql<number>`count(*)`.as('count')
-        })
-        .from(models)
-        .groupBy(models.category);
-    } catch (error) {
-      console.error("Error counting models by category:", error);
-      throw error;
-    }
-  }
 
   // ดึง models หลายตัวตาม IDs
   async getModelsByIds(ids: string[]) {
