@@ -1,5 +1,4 @@
-import React from 'react';
-import { Search, Menu, Globe, ChevronDown } from 'lucide-react';
+import {  Menu, Globe, } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
