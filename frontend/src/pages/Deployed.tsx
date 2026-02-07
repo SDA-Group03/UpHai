@@ -186,6 +186,8 @@ export default function Dashboard() {
       // 2. เรียก API (ส่ง ID ไป)
       await terminateInstances(id);
 
+      setModels((prevModels) => prevModels.filter((model) => model.id !== id));
+
       // 3. Success: อัปเดต State หน้าเว็บ
       alert(`Instance ${id.substring(0, 8)}... terminated successfully.`);
     } catch (err: any) {
@@ -281,7 +283,6 @@ export default function Dashboard() {
                 <option value="all">All Status</option>
                 <option value="running">Running</option>
                 <option value="stopped">Stopped</option>
-                <option value="terminated">Terminated</option>
               </select>
             </div>
           </div>

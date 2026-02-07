@@ -91,7 +91,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
   .post("/instances/:id/terminate", async ({ params, set }) => {
     try {
       await container.removeContainer(params.id, true);
-      await instanceService.updateInstance(params.id, { status: "terminated" });
+      await instanceService.deleteInstance(params.id);
       return { success: true, message: `Container ${params.id} terminated` };
     } catch (error) {
       set.status = 500;
