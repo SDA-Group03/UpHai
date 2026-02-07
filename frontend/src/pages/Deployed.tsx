@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 // เพิ่ม import service ที่ต้องใช้
-import { getDeployedInstances, terminateInstances, stopInstances } from "../services/dockerService";
+import { getDeployedInstances, terminateInstances, stopInstances, startInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
 // --- TYPES ---
@@ -212,7 +212,8 @@ export default function Dashboard() {
   }, []);
 
   // Action handlers (Optimistic UI updates - ในการใช้งานจริงอาจต้องยิง API ด้วย)
-  const handleStart = (id: string) => {
+  const handleStart = async (id: string) => {
+    await startInstances(id);
     setModels((prev) =>
       prev.map((model) => (model.id === id ? { ...model, status: "running" as ModelStatus } : model)),
     );
