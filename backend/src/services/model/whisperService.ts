@@ -46,7 +46,7 @@ export const createWhisperInstance = async (modelName = "base"): Promise<Whisper
     Env: [`ASR_MODEL=${modelName}`, `ASR_ENGINE=openai_whisper`],
     Tty: true,
     HostConfig: {
-      PortBindings: { "9000/tcp": [{ HostPort: "" }] },
+      PortBindings: { "8000/tcp": [{ HostPort: "" }] },
       Memory: 2 * 1024 * 1024 * 1024,
       Binds: [`${WHISPER_VOLUME}:/root/.cache/whisper:ro`],
     },
@@ -54,7 +54,7 @@ export const createWhisperInstance = async (modelName = "base"): Promise<Whisper
 
   await container.start();
   const data = await container.inspect();
-  const port = data.NetworkSettings.Ports["9000/tcp"]?.[0]?.HostPort;
+  const port = data.NetworkSettings.Ports["8000/tcp"]?.[0]?.HostPort;
   
   if (!port) throw new Error("Port not found");
 

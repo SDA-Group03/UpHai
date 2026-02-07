@@ -46,9 +46,9 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
       const result = await deployModel(payload);
       console.log('Deployment result:', result);
       setDeployStatus('Deployed successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deployment failed:', error);
-      setDeployStatus('Deployment failed.');
+      setDeployStatus(error.message || 'Deployment failed.');
     } finally {
       setIsDeploying(false);
     }
