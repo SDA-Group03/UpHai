@@ -4,7 +4,7 @@ import * as container from "../services/containerService";
 import { instanceService } from "../services/instanceService";
 import { getEngineVolumesSummary } from "../services/volumeService";
 
-export const dockerRoutes = new Elysia({ prefix: "/docker" })
+export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
   .post("/instances", async ({ body, set }) => {
     if (!body.userId) {
       set.status = 400;
