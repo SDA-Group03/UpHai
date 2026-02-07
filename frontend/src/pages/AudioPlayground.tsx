@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Switch } from "@/components/ui/switch";
+import { getUserInstances } from '@/services/dockerService';
+import { fetchProfile } from '@/services/authService';
 
 interface AudioTask {
   id: string;
@@ -57,21 +59,25 @@ export default function AudioPlayground() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
 
-  // Load instances (mock data - replace with actual API call)
+  // Load Whisper instances
   useEffect(() => {
-    // TODO: Replace with actual API call to fetch Whisper instances
-    const mockInstances: WhisperInstance[] = [
-      {
-        id: '1',
-        modelId: 'faster-whisper-small',
-        modelName: 'Whisper Small',
-        containerName: 'whisper-small-container',
-        port: 8080,
-        status: 'running'
+    const fetchWhisperInstances = async () => {
+      try {
+        const user = await fetchProfile();
+        if (!user) return;
+
+        const response = await getUserInstances(String(user.id), { engineId: 'whisper' });
+        if (!response.success) return;
+
+        const instances = Array.isArray(response.data) ? (response.data as WhisperInstance[]) : [];
+        setWhisperInstances(instances);
+        setSelectedInstance(instances[0] || null);
+      } catch (error) {
+        console.error('Failed to fetch whisper instances:', error);
       }
-    ];
-    setWhisperInstances(mockInstances);
-    setSelectedInstance(mockInstances[0]);
+    };
+
+    fetchWhisperInstances();
   }, []);
 
   // Audio file upload handler

@@ -53,10 +53,11 @@ export default function ChatPlayground() {
       try {
         const user = await fetchProfile();
         if (user) {
-          const response = await getUserInstances(user.id.toString());
-          if (response.success && response.data.length > 0) {
-            setUserInstances(response.data);
-            setSelectedInstance(response.data[0]);
+          const response = await getUserInstances(user.id.toString(), { engineId: 'ollama' });
+          if (response.success) {
+            const instances = Array.isArray(response.data) ? response.data : [];
+            setUserInstances(instances);
+            setSelectedInstance(instances[0] || null);
           }
         }
       } catch (error) {
@@ -82,7 +83,7 @@ export default function ChatPlayground() {
     });
 
     // Add empty assistant message for streaming
-    const assistantMessage = addMessage({
+    addMessage({
       role: 'assistant',
       content: '',
     });
