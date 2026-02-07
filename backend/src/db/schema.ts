@@ -49,9 +49,9 @@ export const models = sqliteTable("models", {
 
 export const instances = sqliteTable("instances", {
   id: text("id").primaryKey(),
-  userId: text("user_id").notNull(), 
-  engineId: text("engine_id").notNull(), 
-  modelId: text("model_id").notNull(), 
+userId: text("user_id").notNull().references(() => users.id), 
+  engineId: text("engine_id").notNull().references(() => engines.id), 
+  modelId: text("model_id").notNull().references(() => models.id),
   containerName: text("container_name").notNull(),
   port: integer("port").notNull(),
   status: text("status").notNull(), 

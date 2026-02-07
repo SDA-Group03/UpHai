@@ -41,6 +41,7 @@ export function initDB() {
   db.run(`
     CREATE TABLE IF NOT EXISTS instances (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       engine_id TEXT NOT NULL,
       model_id TEXT NOT NULL,
       container_name TEXT NOT NULL,
