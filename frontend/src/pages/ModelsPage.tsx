@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { ModelCard } from '../components/ModelCard';
 import { ModelDetailsSheet } from '../components/ModelDetailsSheet';
