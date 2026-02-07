@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Info, ImagePlus, Send, Trash2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,19 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { getUserInstances } from '@/services/dockerService';
+import { fetchProfile } from '@/services/authService';
+
+interface UserInstance {
+  id: string;
+  modelName: string;
+  port: number;
+  [key: string]: any;
+}
 
 export default function ChatPlayground() {
-  const [model, setModel] = useState('Kimi-K2.5');
+  const [model, setModel] = useState('');
+  const [userModels, setUserModels] = useState<UserInstance[]>([]);
   const [systemPrompt, setSystemPrompt] = useState('You are Kimi, an AI assistant created by Moonshot AI.');
   const [maxTokens, setMaxTokens] = useState(8192);
   const [temperature, setTemperature] = useState([1.0]);
@@ -19,6 +29,30 @@ export default function ChatPlayground() {
   const [frequencyPenalty, setFrequencyPenalty] = useState([0.0]);
 
   const [prompt, setPrompt] = useState('');
+
+  useEffect(() => {
+    const fetchUserModels = async () => {
+      try {
+        const user = await fetchProfile();
+        if (user) {
+          console.log("Fetching models for user:", user);
+          const response = await getUserInstances(user.id.toString());
+          if (response.success) {
+            console.log("Fetched user models:", response.data);
+            setUserModels(response.data);
+            if (response.data.length > 0) {
+              const firstModel = response.data[0];
+              setModel(firstModel.containerName);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user models:", error);
+      }
+    };
+
+    fetchUserModels();
+  }, []);
 
   return (
     <TooltipProvider>
@@ -36,9 +70,11 @@ export default function ChatPlayground() {
                     <SelectValue placeholder="Select a model" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Kimi-K2.5">Kimi-K2.5</SelectItem>
-                    <SelectItem value="GPT-4">GPT-4</SelectItem>
-                    <SelectItem value="Claude-3">Claude-3</SelectItem>
+                    {userModels.map((userModel) => (
+                      <SelectItem key={userModel.id} value={userModel.containerName}>
+                        {userModel.containerName}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
