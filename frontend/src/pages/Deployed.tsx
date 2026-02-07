@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 // เพิ่ม import service ที่ต้องใช้
-import { getDeployedInstances } from "../services/dockerService";
+import { getDeployedInstances, terminateInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
 // --- TYPES ---
@@ -174,6 +174,27 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ModelStatus | "all">("all");
 
+  const handleTerminate = async (id: string) => {
+    // 1. Confirm ก่อนลบ
+    const confirmTerminate = window.confirm(
+      "Are you sure you want to terminate this model? This action cannot be undone.",
+    );
+
+    if (!confirmTerminate) return;
+
+    try {
+      // 2. เรียก API (ส่ง ID ไป)
+      await terminateInstances(id);
+
+      // 3. Success: อัปเดต State หน้าเว็บ
+      alert(`Instance ${id.substring(0, 8)}... terminated successfully.`);
+    } catch (err: any) {
+      // 4. Error handling
+      console.error("Failed to terminate:", err);
+      alert(err.message || "Failed to terminate the instance. Please try again.");
+    }
+  };
+
   // Fetch Data on Mount
   useEffect(() => {
     setIsLoading(true);
@@ -202,19 +223,6 @@ export default function Dashboard() {
     setModels((prev) =>
       prev.map((model) => (model.id === id ? { ...model, status: "stopped" as ModelStatus, uptime: "0h" } : model)),
     );
-  };
-
-  const handleTerminate = (id: string) => {
-    const confirmTerminate = window.confirm(
-      "Are you sure you want to terminate this model? This action cannot be undone.",
-    );
-    if (confirmTerminate) {
-      setModels((prev) =>
-        prev.map((model) =>
-          model.id === id ? { ...model, status: "terminated" as ModelStatus, uptime: "0h" } : model,
-        ),
-      );
-    }
   };
 
   // Filter logic

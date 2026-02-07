@@ -27,3 +27,14 @@ export async function getDeployedInstances(userId: string) {
     throw new Error(error.response?.data?.error || "Failed to fetch instances");
   }
 }
+
+export async function terminateInstances(id: string) {
+  try {
+    // ยิง request ไปที่ backend: POST /instances/:id/terminate
+    const response = await ax.post(`/docker/instances/${id}/terminate`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Terminate Error:", error);
+    throw new Error(error.response?.data?.error || "Failed to terminate instances");
+  }
+}

@@ -88,7 +88,19 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     return { success: true, message: `Container ${params.id} started` };
   })
 
-  //.post("/instances/:id/terminate", async ({ params }) => {})
+  .post("/instances/:id/terminate", async ({ params, set }) => {
+    try {
+      await container.removeContainer(params.id, true);
+      await instanceService.updateInstance(params.id, { status: "terminated" });
+      return { success: true, message: `Container ${params.id} terminated` };
+    } catch (error) {
+      set.status = 500;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Failed to terminate container",
+      };
+    }
+  })
   .post("/instances/:id/restart", async ({ params }) => {
     await container.restartContainer(params.id);
     await instanceService.updateInstance(params.id, { status: "running" });
