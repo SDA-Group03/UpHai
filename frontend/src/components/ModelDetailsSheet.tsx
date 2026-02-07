@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { ModelData } from '../lib/types';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

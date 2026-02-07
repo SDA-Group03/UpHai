@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Terminal, Cpu, Zap, ArrowRight, Layers, Command, User, LogOut } from 'lucide-react';
 import { useCurrentUser } from '../services/authService';
