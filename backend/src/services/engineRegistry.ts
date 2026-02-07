@@ -1,6 +1,7 @@
-import { createOllamaInstance } from "./ollamaService";
-import { createWhisperInstance } from "./whisperService";
-// import { createSDInstance } from "./sdService";
+import { createOllamaInstance } from "./model/ollamaService";
+import { createWhisperInstance } from "./model/whisperService";
+import { instanceService } from "./instanceService";
+import { modelService } from "./modelService";
 
 export interface InstanceResult {
   containerId: string;
@@ -9,32 +10,43 @@ export interface InstanceResult {
   engine: string;
 }
 
-export async function createContainerByEngine(
-  modelName: string,
-  engine: string
-): Promise<InstanceResult> {
-  console.log(`🎯 Creating instance: ${engine}/${modelName}`);
-
-  switch (engine.toLowerCase()) {
-    case "ollama": {
-      const result = await createOllamaInstance(modelName);
-      return { ...result, engine: "ollama" };
-    }
-    case "whisper": {
-      const result = await createWhisperInstance(modelName);
-      return { ...result, engine: "whisper" };
-    }
-    // case "stable-diffusion":
-    // case "sd": {
-    //   const result = await createSDInstance(modelName);
-    //   return { ...result, engine: "stable-diffusion" };
-    // }
-    default:
-      throw new Error(`Engine '${engine}' not supported.`);
-  }
+export interface CreateInstanceOptions {
+  modelName: string;
+  engine: string;
+  userId: string;
 }
 
-export function getEngineConfig(engine: string) {
+export const createContainerByEngine = async (options: CreateInstanceOptions): Promise<InstanceResult> => {
+  const { modelName, engine, userId } = options;
+
+  const models = await modelService.searchModels(modelName);
+  const model = models.find(m => m.name === modelName && m.engine === engine);
+
+  if (!model) throw new Error(`Model '${modelName}' not found for engine '${engine}'`);
+
+  const engineMap: Record<string, () => Promise<any>> = {
+    ollama: () => createOllamaInstance(modelName),
+    whisper: () => createWhisperInstance(modelName),
+  };
+
+  const createFn = engineMap[engine.toLowerCase()];
+  if (!createFn) throw new Error(`Engine '${engine}' not supported`);
+
+  const result = { ...await createFn(), engine };
+
+  await instanceService.createInstance({
+    userId,
+    engineId: engine,
+    modelId: model.id,
+    containerName: `${engine}-${modelName}-${result.containerId.substring(0, 8)}`,
+    containerId: result.containerId,
+    port: parseInt(result.port),
+  });
+
+  return result;
+};
+
+export const getEngineConfig = (engine: string) => {
   const configs = {
     ollama: {
       volume: process.env.OLLAMA_VOLUME || "ollama-models",
@@ -50,7 +62,7 @@ export function getEngineConfig(engine: string) {
     },
     "stable-diffusion": {
       volume: process.env.SD_VOLUME || "sd-models",
-      defaultPort: 8000, // อัปเดตพอร์ตเป็น 8000 สำหรับ FastSD CPU
+      defaultPort: 8000,
       healthEndpoint: "/",
       dockerImage: "universonic/stable-diffusion-webui",
     },
@@ -59,4 +71,4 @@ export function getEngineConfig(engine: string) {
   const config = configs[engine.toLowerCase() as keyof typeof configs];
   if (!config) throw new Error(`Unknown engine: ${engine}`);
   return config;
-}
+};
