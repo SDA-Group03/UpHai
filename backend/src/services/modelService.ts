@@ -63,22 +63,6 @@ export class ModelService {
     }
   }
 
-  // ดึง models พร้อม engine info (JOIN)
-  async getModelsWithEngines() {
-    try {
-      return await db
-        .select({
-          model: models,
-          engine: engines,
-        })
-        .from(models)
-        .leftJoin(engines, eq(models.engine, engines.id));
-    } catch (error) {
-      console.error("Error fetching models with engines:", error);
-      throw error;
-    }
-  }
-
 
   // Filter models ด้วยหลายเงื่อนไข
   async filterModels(filters: {

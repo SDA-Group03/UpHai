@@ -1,6 +1,6 @@
 import { createOllamaInstance } from "./ollamaService";
 import { createWhisperInstance } from "./whisperService";
-import { createSDInstance } from "./sdService";
+// import { createSDInstance } from "./sdService";
 
 export interface InstanceResult {
   containerId: string;
@@ -24,11 +24,11 @@ export async function createContainerByEngine(
       const result = await createWhisperInstance(modelName);
       return { ...result, engine: "whisper" };
     }
-    case "stable-diffusion":
-    case "sd": {
-      const result = await createSDInstance(modelName);
-      return { ...result, engine: "stable-diffusion" };
-    }
+    // case "stable-diffusion":
+    // case "sd": {
+    //   const result = await createSDInstance(modelName);
+    //   return { ...result, engine: "stable-diffusion" };
+    // }
     default:
       throw new Error(`Engine '${engine}' not supported.`);
   }
