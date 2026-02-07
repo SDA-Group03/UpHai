@@ -17,6 +17,7 @@ import {sendMessage} from '../services/chatService';
 interface UserInstance {
   id: string;
   modelId: string;
+  modelName: string | null;
   containerName: string;
   port: number;
   status: string;
@@ -104,7 +105,7 @@ export default function ChatPlayground() {
     ];
 
     const options: ChatOptions = {
-      model: selectedInstance.modelId,
+      model: selectedInstance.modelName || selectedInstance.modelId,
       temperature: temperature[0],
       top_p: topP[0],
       top_k: topK[0],
