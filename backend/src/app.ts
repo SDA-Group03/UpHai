@@ -1,12 +1,9 @@
 import { Elysia } from 'elysia';
 import { cors } from '@elysiajs/cors';
-import { initDB } from './db/initdb.ts';
 import { authRoutes } from './routes/auth.ts';
 import { dockerRoutes } from './routes/dockerRoutes.ts';
 import { modelRoutes } from './routes/modelRoutes.ts';
 import { CORS_ORIGIN } from './config/env.ts';
-
-initDB();
 
 export const app = new Elysia()
   .use(cors({
