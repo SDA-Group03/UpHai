@@ -28,6 +28,16 @@ export async function getDeployedInstances(userId: string) {
   }
 }
 
+export async function getUserInstances(userId: string) {
+  try {
+    const response = await ax.get(`/docker/instances/user/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to fetch user instances:", error);
+    const message = error.response?.data?.error || "Failed to fetch user instances";
+    throw new Error(message);
+  }
+}
 export async function terminateInstances(id: string) {
   try {
     // ยิง request ไปที่ backend: POST /instances/:id/terminate
