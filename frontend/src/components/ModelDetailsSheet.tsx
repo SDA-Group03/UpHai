@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { ModelData } from '../lib/types';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +10,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { deployModel } from '@/services/dockerService';
+import { fetchProfile } from '@/services/authService';
 
 interface ModelDetailsSheetProps {
   model: ModelData | null;
@@ -18,6 +20,40 @@ interface ModelDetailsSheetProps {
 }
 
 export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetProps) => {
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployStatus, setDeployStatus] = useState<string | null>(null);
+
+  const handleDeploy = async () => {
+    if (!model) return;
+
+    setIsDeploying(true);
+    setDeployStatus('Deploying...');
+
+    try {
+      const user = await fetchProfile();
+      console.log('User profile:', user);
+      if (!user) {
+        setDeployStatus('You must be logged in to deploy a model.');
+        setIsDeploying(false);
+        return;
+      }
+      
+      const payload = {
+        userId: String(user.id),
+        engine: model.engine,
+        modelName: model.name,
+      };
+      const result = await deployModel(payload);
+      console.log('Deployment result:', result);
+      setDeployStatus('Deployed successfully!');
+    } catch (error: any) {
+      console.error('Deployment failed:', error);
+      setDeployStatus(error.message || 'Deployment failed.');
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
@@ -63,9 +99,16 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
               </div>
 
               <div className="pt-6 mt-auto">
-                <Button className="w-full bg-[#6E29F6] hover:bg-[#5b21cd] h-11 text-base shadow-lg shadow-purple-900/10">
-                  Deploy Model
+                <Button 
+                  className="w-full bg-[#6E29F6] hover:bg-[#5b21cd] h-11 text-base shadow-lg shadow-purple-900/10"
+                  onClick={handleDeploy}
+                  disabled={isDeploying}
+                >
+                  {isDeploying ? deployStatus : 'Deploy Model'}
                 </Button>
+                {deployStatus && !isDeploying && (
+                  <p className="text-sm text-center mt-2">{deployStatus}</p>
+                )}
               </div>
             </div>
           </>
