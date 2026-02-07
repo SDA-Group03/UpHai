@@ -1,4 +1,5 @@
 import ax from "../conf/ax"
+import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from 'react'
 
 const TOKEN_KEY = 'uph_access_token'
@@ -146,6 +147,7 @@ export async function fetchProfile(): Promise<Profile> {
 
 export function useCurrentUser() {
   const [user, setUser] = useState<Profile | null>(null)
+  const navigate = useNavigate()
 
   useEffect(() => {
     setUser(getCurrentUser())
@@ -154,6 +156,7 @@ export function useCurrentUser() {
   const handleLogout = async () => {
     await logout()
     setUser(null)
+    navigate('/login')
   }
 
   return { user, handleLogout }

@@ -1,5 +1,5 @@
 import { db } from "../db/client";
-import { instances } from "../db/schema";
+import { instances, models } from "../db/schema";
 import { eq, desc } from "drizzle-orm";
 
 export interface CreateInstanceData {
@@ -34,9 +34,25 @@ export class InstanceService {
   }
 
   async getUserInstances(userId: string) {
-    return await db.select().from(instances)
+    const result = await db
+      .select({
+        id: instances.id,
+        userId: instances.userId,
+        engineId: instances.engineId,
+        modelId: instances.modelId,
+        modelName: models.name, // <-- get the model name
+        containerName: instances.containerName,
+        port: instances.port,
+        status: instances.status,
+        createdAt: instances.createdAt,
+        lastActivity: instances.lastActivity,
+      })
+      .from(instances)
+      .leftJoin(models, eq(instances.modelId, models.id)) // join models table
       .where(eq(instances.userId, userId))
       .orderBy(desc(instances.createdAt));
+
+    return result;
   }
 
   async updateInstance(id: string, data: { status?: string; lastActivity?: number }) {
@@ -50,9 +66,11 @@ lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(
     return result;
   }
 
-  async deleteInstance(id: string) {
-    await db.delete(instances).where(eq(instances.id, id));
-  }
+    async deleteInstance(id: string) {
+
+      // await db.delete(instances).where(eq(instances.id, id));
+
+    }
 }
 
 export const instanceService = new InstanceService();

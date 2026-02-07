@@ -56,7 +56,7 @@ export const getEngineConfig = (engine: string) => {
     },
     whisper: {
       volume: process.env.WHISPER_VOLUME || "whisper-models",
-      defaultPort: 9000,
+      defaultPort: 8000,
       healthEndpoint: "/",
       dockerImage: "fedirz/faster-whisper-server:latest-cpu",
     },

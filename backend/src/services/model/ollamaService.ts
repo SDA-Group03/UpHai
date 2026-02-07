@@ -1,4 +1,5 @@
 import Docker from "dockerode";
+import { OLLAMA_SERVICE_HOST } from "../../config/env.ts";
 
 const docker = new Docker(
   process.platform === "win32" 
@@ -30,7 +31,7 @@ const ensureImage = async () => {
 const waitForService = async (port: string) => {
   for (let i = 0; i < 30; i++) {
     try {
-      if ((await fetch(`http://localhost:${port}/api/tags`)).ok) return;
+      if ((await fetch(`http://${OLLAMA_SERVICE_HOST}:${port}/api/tags`)).ok) return;
     } catch {}
     await new Promise(r => setTimeout(r, 1000));
   }

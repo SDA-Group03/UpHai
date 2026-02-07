@@ -11,6 +11,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { deployModel } from '@/services/dockerService';
+import { fetchProfile } from '@/services/authService';
 
 interface ModelDetailsSheetProps {
   model: ModelData | null;
@@ -29,17 +30,25 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
     setDeployStatus('Deploying...');
 
     try {
+      const user = await fetchProfile();
+      console.log('User profile:', user);
+      if (!user) {
+        setDeployStatus('You must be logged in to deploy a model.');
+        setIsDeploying(false);
+        return;
+      }
+      
       const payload = {
-        userId: "1", 
+        userId: String(user.id),
         engine: model.engine,
         modelName: model.name,
       };
       const result = await deployModel(payload);
       console.log('Deployment result:', result);
       setDeployStatus('Deployed successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Deployment failed:', error);
-      setDeployStatus('Deployment failed.');
+      setDeployStatus(error.message || 'Deployment failed.');
     } finally {
       setIsDeploying(false);
     }
