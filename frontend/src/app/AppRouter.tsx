@@ -1,15 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from '../routes/ProtectedRoute';
-import { DashboardLayout } from '@/layouts/DashboardLayout';
+import { Layout } from '@/layouts/Layout';
 import { LoadingPage } from '@/components/LoadingPage';
-
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const ModelsPage = lazy(() => import('../pages/ModelsPage').then(module => ({ default: module.ModelsPage })));
-
+const ChatPlayground = lazy(() => import('@/pages/ChatPlayground'));
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -20,9 +19,13 @@ export function AppRouter() {
             <Route element={<ProtectedRoute />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/models" element={
-                <DashboardLayout>
+                <Layout>
                   <ModelsPage />
-                </DashboardLayout>} />
+                </Layout>} />
+              <Route path="/playground/chat" element={
+                <Layout>
+                  <ChatPlayground />
+                </Layout>} />
             </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

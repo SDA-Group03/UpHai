@@ -4,3 +4,5 @@ import { PORT } from './src/config/env.ts';
 
 app.listen(PORT);
 console.log(`Elysia is running at ${app.server?.hostname}:${app.server?.port}`);
+
+initDB();

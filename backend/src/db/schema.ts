@@ -49,11 +49,12 @@ export const models = sqliteTable("models", {
 
 export const instances = sqliteTable("instances", {
   id: text("id").primaryKey(),
-  engineId: text("engine_id").notNull(),
-  modelId: text("model_id").notNull(),
+userId: text("user_id").notNull().references(() => users.id), 
+  engineId: text("engine_id").notNull().references(() => engines.id), 
+  modelId: text("model_id").notNull().references(() => models.id),
   containerName: text("container_name").notNull(),
   port: integer("port").notNull(),
-  status: text("status").notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" }),
+  status: text("status").notNull(), 
+ createdAt: integer("created_at", { mode: "timestamp" }),
   lastActivity: integer("last_activity", { mode: "timestamp" }),
 });

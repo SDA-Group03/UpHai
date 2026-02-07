@@ -41,6 +41,7 @@ export function initDB() {
   db.run(`
     CREATE TABLE IF NOT EXISTS instances (
       id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
       engine_id TEXT NOT NULL,
       model_id TEXT NOT NULL,
       container_name TEXT NOT NULL,
@@ -48,6 +49,7 @@ export function initDB() {
       status TEXT NOT NULL,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       last_activity INTEGER DEFAULT (strftime('%s', 'now')),
+      FOREIGN KEY (user_id) REFERENCES users(id),
       FOREIGN KEY (engine_id) REFERENCES engines(id),
       FOREIGN KEY (model_id) REFERENCES models(id)
     );
