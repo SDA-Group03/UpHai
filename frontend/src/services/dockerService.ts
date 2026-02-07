@@ -16,3 +16,14 @@ export async function deployModel(payload: DeployModelPayload) {
     throw new Error(message);
   }
 }
+
+export async function getDeployedInstances(userId: string) {
+  try {
+    // แก้ไขจาก string ธรรมดาเป็น Template Literal เพื่อใส่ ID
+    const response = await ax.get(`/docker/instances/user/${userId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error("Failed to fetch user instances:", error);
+    throw new Error(error.response?.data?.error || "Failed to fetch instances");
+  }
+}

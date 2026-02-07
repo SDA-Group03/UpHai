@@ -5,26 +5,30 @@ import { instanceService } from "../services/instanceService";
 import { getEngineVolumesSummary } from "../services/volumeService";
 
 export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
-  .post("/instances", async ({ body, set }) => {
-    if (!body.userId) {
-      set.status = 400;
-      return { success: false, error: "userId is required" };
-    }
+  .post(
+    "/instances",
+    async ({ body, set }) => {
+      if (!body.userId) {
+        set.status = 400;
+        return { success: false, error: "userId is required" };
+      }
 
-    const result = await createContainerByEngine(body);
-    set.status = 201;
-    return {
-      success: true,
-      data: result,
-      message: `${body.engine}/${body.modelName} deployed`,
-    };
-  }, {
-    body: t.Object({
-      userId: t.String(),
-      engine: t.String(),
-      modelName: t.String(),
-    }),
-  })
+      const result = await createContainerByEngine(body);
+      set.status = 201;
+      return {
+        success: true,
+        data: result,
+        message: `${body.engine}/${body.modelName} deployed`,
+      };
+    },
+    {
+      body: t.Object({
+        userId: t.String(),
+        engine: t.String(),
+        modelName: t.String(),
+      }),
+    },
+  )
 
   .get("/instances/user/:userId", async ({ params }) => {
     const instances = await instanceService.getUserInstances(params.userId);
@@ -32,18 +36,22 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       instances.map(async (inst) => ({
         ...inst,
         containerStatus: (await container.getContainerInfo(inst.id))?.status || "unknown",
-      }))
+      })),
     );
 
     return { success: true, data: enhanced, count: enhanced.length };
   })
 
-  .get("/instances", async ({ query }) => {
-    const data = await container.listContainers(true, query.filter);
-    return { success: true, data, count: data.length };
-  }, {
-    query: t.Object({ filter: t.Optional(t.String()) }),
-  })
+  .get(
+    "/instances",
+    async ({ query }) => {
+      const data = await container.listContainers(true, query.filter);
+      return { success: true, data, count: data.length };
+    },
+    {
+      query: t.Object({ filter: t.Optional(t.String()) }),
+    },
+  )
 
   .get("/instances/:id", async ({ params, set }) => {
     const [dbInstance, containerInfo] = await Promise.all([
@@ -80,6 +88,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     return { success: true, message: `Container ${params.id} started` };
   })
 
+  //.post("/instances/:id/terminate", async ({ params }) => {})
   .post("/instances/:id/restart", async ({ params }) => {
     await container.restartContainer(params.id);
     await instanceService.updateInstance(params.id, { status: "running" });
