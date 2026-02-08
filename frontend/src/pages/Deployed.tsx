@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
 import { getDeployedInstances, terminateInstances, stopInstances, startInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
@@ -36,19 +36,20 @@ function calculateUptime(startedAt: string | undefined, status: ModelStatus): st
 
   if (d > 0) return `${d}d ${h % 24}h`;
   if (h > 0) return `${h}h ${m % 60}m`;
-  if (m > 0) return `${m}m ${s % 60}s`;
+  if (m > 0) return `${m}m`;
   return `${s}s`;
+}
+
+// ฟังก์ชันคำนวณว่าผ่านไป 1 นาทีแล้วหรือยัง
+function getUptimeInSeconds(startedAt: string | undefined): number {
+  if (!startedAt) return 0;
+  return Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
 }
 
 async function fetchModels(): Promise<ModelData[]> {
   try {
-    // 1. Get User Profile
     const userProfile = await fetchProfile();
-
-    // 2. Get Instances
     const response = await getDeployedInstances(userProfile.id.toString());
-
-    console.log("API Response for Instances:", response);
 
     let instances: any[] = [];
 
@@ -63,7 +64,6 @@ async function fetchModels(): Promise<ModelData[]> {
       return [];
     }
 
-    // 4. Map the data safely
     return instances.map((inst: any) => ({
       id: inst.id || inst._id || "unknown-id",
       name: inst.modelId || inst.name || "Unnamed Model",
@@ -74,7 +74,7 @@ async function fetchModels(): Promise<ModelData[]> {
       uptime: inst.uptime || "0s",
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
-      startedAt: inst.startedAt, // เก็บ timestamp
+      startedAt: inst.startedAt,
     }));
   } catch (error) {
     console.error("Failed to fetch models:", error);
@@ -90,17 +90,68 @@ interface ModelCardProps {
 }
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTerminate }) => {
-  // State สำหรับ real-time uptime
   const [currentUptime, setCurrentUptime] = useState(model.uptime);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentIntervalTypeRef = useRef<"fast" | "slow" | null>(null);
 
-  // Update uptime ทุกวินาที
+  // 🎯 Progressive Interval Hook
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentUptime(calculateUptime(model.startedAt, model.status));
-    }, 60000);
+    // Update ทันทีเมื่อ mount
+    setCurrentUptime(calculateUptime(model.startedAt, model.status));
 
-    return () => clearInterval(interval);
-  }, [model.startedAt, model.status]);
+    // ถ้าไม่ได้ running ให้ clear interval และออก
+    if (model.status !== "running" || !model.startedAt) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        currentIntervalTypeRef.current = null;
+      }
+      return;
+    }
+
+    // ฟังก์ชันสำหรับ setup interval
+    const setupInterval = () => {
+      // Clear interval เดิม (ถ้ามี)
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      // คำนวณว่าควรใช้ interval แบบไหน
+      const uptimeSeconds = getUptimeInSeconds(model.startedAt);
+      const shouldUseFastInterval = uptimeSeconds < 60;
+      const intervalMs = shouldUseFastInterval ? 1000 : 30000;
+      const intervalType = shouldUseFastInterval ? "fast" : "slow";
+
+      // ถ้า interval type เหมือนเดิมก็ไม่ต้อง log
+      if (currentIntervalTypeRef.current !== intervalType) {
+        console.log(`[${model.name}] Using ${intervalType} interval (${intervalMs}ms) - uptime: ${uptimeSeconds}s`);
+        currentIntervalTypeRef.current = intervalType;
+      }
+
+      // สร้าง interval ใหม่
+      intervalRef.current = setInterval(() => {
+        setCurrentUptime(calculateUptime(model.startedAt, model.status));
+
+        // ⚡ เช็คว่าต้องเปลี่ยนจาก fast เป็น slow หรือไม่
+        const currentUptime = getUptimeInSeconds(model.startedAt);
+        if (shouldUseFastInterval && currentUptime >= 60) {
+          console.log(`[${model.name}] Switching from fast (1s) to slow (30s) interval`);
+          setupInterval(); // Re-setup ด้วย interval ใหม่
+        }
+      }, intervalMs);
+    };
+
+    // เริ่ม setup interval
+    setupInterval();
+
+    // Cleanup function
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [model.startedAt, model.status, model.name]);
 
   const getStatusBadge = () => {
     switch (model.status) {
@@ -197,15 +248,12 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
 // ============================================================================
 
 export default function Dashboard() {
-  // State management
   const [models, setModels] = useState<DeployedModel[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ModelStatus | "all">("all");
 
-  // ฟังก์ชันสำหรับ fetch ข้อมูล (แยกออกมาเพื่อใช้ซ้ำ)
   const loadModels = async () => {
     try {
       const data = await fetchModels();
@@ -223,7 +271,6 @@ export default function Dashboard() {
     const confirmTerminate = window.confirm(
       "Are you sure you want to terminate this model? This action cannot be undone.",
     );
-
     if (!confirmTerminate) return;
 
     try {
@@ -235,27 +282,9 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch Data on Mount
-  useEffect(() => {
-    setIsLoading(true);
-    loadModels();
-  }, []);
-
-  // Auto-refresh ทุก 1 นาที (60000ms)
-  useEffect(() => {
-    const refreshInterval = setInterval(() => {
-      console.log("Auto-refreshing models data...");
-      loadModels();
-    }, 60000); // 60 วินาที
-
-    return () => clearInterval(refreshInterval);
-  }, []);
-
-  // Action handlers
   const handleStart = async (id: string) => {
     try {
       await startInstances(id);
-      // Refresh ข้อมูลหลังจาก start
       await loadModels();
     } catch (err) {
       console.error("Failed to start:", err);
@@ -266,7 +295,6 @@ export default function Dashboard() {
   const handleStop = async (id: string) => {
     try {
       await stopInstances(id);
-      // Refresh ข้อมูลหลังจาก stop
       await loadModels();
     } catch (err) {
       console.error("Failed to stop:", err);
@@ -274,7 +302,19 @@ export default function Dashboard() {
     }
   };
 
-  // Filter logic
+  useEffect(() => {
+    setIsLoading(true);
+    loadModels();
+  }, []);
+
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      console.log("Auto-refreshing models data...");
+      loadModels();
+    }, 60000);
+    return () => clearInterval(refreshInterval);
+  }, []);
+
   const filteredModels = models.filter((model) => {
     const matchesSearch =
       model.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -288,13 +328,11 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 overflow-auto">
       <div className="max-w-7xl mx-auto">
-        {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Deployment Dashboard</h1>
           <p className="text-gray-600">Manage and monitor your deployed models</p>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white p-5 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-500 mb-1">Total Models</p>
@@ -306,7 +344,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Search and Filter Bar */}
         <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -335,7 +372,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Content Area: Loading / Error / Grid */}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 size={40} className="text-purple-600 animate-spin mb-4" />
