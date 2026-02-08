@@ -4,6 +4,7 @@ import { initDB } from './db/initdb.ts';
 import { authRoutes } from './routes/auth.ts';
 import { dockerRoutes } from './routes/dockerRoutes.ts';
 import { modelRoutes } from './routes/modelRoutes.ts';
+import { whisperProxyRoutes } from './routes/whisperProxyRoutes.ts';
 import { CORS_ORIGIN } from './config/env.ts';
 
 initDB();
@@ -19,3 +20,4 @@ export const app = new Elysia()
   .use(authRoutes)
   .use(dockerRoutes)
   .use(modelRoutes)
+  .use(whisperProxyRoutes);
