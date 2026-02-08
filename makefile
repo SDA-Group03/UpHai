@@ -4,7 +4,7 @@
 
 # Config Variables
 NETWORK_NAME := uphai-net
-BACKEND_DIR := backend
+BACKEND_DIR := backend/src
 FRONTEND_DIR := frontend
 MODEL_DIR := $(BACKEND_DIR)/model
 

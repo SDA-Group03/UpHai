@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Info, Send, Trash2, Loader2 } from 'lucide-react';
+import { Info, Send, Trash2, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,11 +8,13 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getUserInstances } from '@/services/dockerService';
 import { fetchProfile } from '@/services/authService';
+import { useInterval } from 'react-use';
 import { useChatHistory } from '../services/useChatHistory';
 import type { ChatOptions } from '../services/chatService';
-import {sendMessage} from '../services/chatService';
+import { sendMessage, checkOllamaHealth } from '../services/chatService';
 
 interface UserInstance {
   id: string;
@@ -27,6 +29,8 @@ export default function ChatPlayground() {
   // Model & Instance State
   const [selectedInstance, setSelectedInstance] = useState<UserInstance | null>(null);
   const [userInstances, setUserInstances] = useState<UserInstance[]>([]);
+  const [isHealthy, setIsHealthy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Model Parameters
   const [systemPrompt, setSystemPrompt] = useState('You are a helpful AI assistant.');
@@ -53,26 +57,63 @@ export default function ChatPlayground() {
       try {
         const user = await fetchProfile();
         if (user) {
-          const response = await getUserInstances(user.id.toString());
-          if (response.success && response.data.length > 0) {
-            setUserInstances(response.data);
-            setSelectedInstance(response.data[0]);
+          const response = await getUserInstances(user.id.toString(), { engineId: 'ollama' });
+          if (response.success) {
+            const instances = Array.isArray(response.data) ? response.data : [];
+            setUserInstances(instances);
+            setSelectedInstance(instances[0] || null);
           }
         }
       } catch (error) {
         console.error("Failed to fetch user instances:", error);
+        setError('Failed to load Ollama instances');
       }
     };
 
     fetchUserInstances();
   }, []);
 
+  // Health check interval
+  useInterval(
+    () => {
+      if (!selectedInstance) return;
+      checkOllamaHealth(selectedInstance.port).then((healthy) => {
+        setIsHealthy(healthy);
+        if (!healthy && !isLoading) {
+          setError(`Instance ${selectedInstance.containerName} is not responding`);
+        } else if (healthy && error?.includes('not responding')) {
+          setError(null);
+        }
+      });
+    },
+    selectedInstance ? 30000 : null
+  );
+
+  // Initial health check
+  useEffect(() => {
+    if (!selectedInstance) {
+      setIsHealthy(false);
+      setError(null);
+      return;
+    }
+
+    checkOllamaHealth(selectedInstance.port).then((healthy) => {
+      setIsHealthy(healthy);
+      if (!healthy) {
+        setError(`Instance ${selectedInstance.containerName} is not responding. Check if container is running.`);
+      } else {
+        setError(null);
+      }
+    });
+  }, [selectedInstance]);
+
   // Handle send message
   const handleSendMessage = async () => {
-    if (!prompt.trim() || !selectedInstance || isLoading) return;
+    if (!prompt.trim() || !selectedInstance || isLoading || !isHealthy) return;
 
     const userMessage = prompt.trim();
     setPrompt('');
+    setError(null);
     setIsLoading(true);
 
     // Add user message
@@ -80,7 +121,13 @@ export default function ChatPlayground() {
       role: 'user',
       content: userMessage,
     });
-    
+
+    // Add empty assistant message for streaming
+    addMessage({
+      role: 'assistant',
+      content: '',
+    });
+
     // Prepare messages for API (include system prompt if exists)
     const apiMessages = [
       ...(systemPrompt ? [{ 
@@ -126,7 +173,9 @@ export default function ChatPlayground() {
       // onError - เรียกเมื่อเกิดข้อผิดพลาด
       (error) => {
         console.error('Chat error:', error);
-        updateLastMessage(`Error: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        setError(`Chat Error: ${errorMessage}`);
+        updateLastMessage(`Error: ${errorMessage}`);
         setIsLoading(false);
       }
     );
@@ -157,7 +206,15 @@ export default function ChatPlayground() {
               <div className="flex flex-col gap-3">
                 {/* Instance Selection */}
                 <div className="w-full grid gap-1">
-                  <div className="text-sm text-slate-700">Instance</div>
+                  <div className="text-sm text-slate-700 flex items-center gap-2">
+                    Instance
+                    {selectedInstance && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`}
+                        title={isHealthy ? 'Online' : 'Offline'}
+                      />
+                    )}
+                  </div>
                   <Select 
                     value={selectedInstance?.id || ''} 
                     onValueChange={(value) => {
@@ -176,6 +233,11 @@ export default function ChatPlayground() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {selectedInstance && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      Port: {selectedInstance.port} • {isHealthy ? '✓ Ready' : '✗ Offline'}
+                    </p>
+                  )}
                 </div>
 
                 {/* System Prompt */}
@@ -382,15 +444,29 @@ export default function ChatPlayground() {
             <div className="w-full box-border py-2 pt-0 text-sm flex flex-col px-4">
               {/* Model Badge */}
               <div className="h-[36px] bg-slate-100 rounded-md flex items-center px-3 justify-between mb-4">
-                <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                <span className="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap">
                   {selectedInstance?.containerName || 'No instance selected'}
+                  {selectedInstance && (
+                    <span
+                      className={`w-2 h-2 rounded-full ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`}
+                      title={isHealthy ? 'Online' : 'Offline'}
+                    />
+                  )}
                 </span>
                 {selectedInstance && (
-                  <span className="text-xs text-slate-500">
-                    Port: {selectedInstance.port}
+                  <span className="text-xs text-slate-500 font-mono">
+                    :{selectedInstance.port} • {isHealthy ? '✓ Ready' : '✗ Offline'}
                   </span>
                 )}
               </div>
+
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
               {/* Chat Messages */}
               <div className="flex-1 space-y-4">
@@ -466,13 +542,19 @@ export default function ChatPlayground() {
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Type your message... (Shift+Enter for new line)"
+                  placeholder={
+                    !selectedInstance
+                      ? "Please select an instance first..."
+                      : !isHealthy
+                      ? "Instance is offline. Check if the container is running..."
+                      : "Type your message... (Shift+Enter for new line)"
+                  }
                   className="flex-1 resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 min-h-[60px] max-h-[200px]"
-                  disabled={isLoading || !selectedInstance}
+                  disabled={isLoading || !selectedInstance || !isHealthy}
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={!prompt.trim() || isLoading || !selectedInstance}
+                  disabled={!prompt.trim() || isLoading || !selectedInstance || !isHealthy}
                   size="icon"
                   className="h-10 w-10 shrink-0"
                 >
