@@ -70,7 +70,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     }
 
     await instanceService.updateInstance(params.id, {
-      lastActivity: new Date(),
+      lastActivity: Date.now(),
     });
 
     return { success: true, data: { ...dbInstance, container: containerInfo } };
@@ -87,7 +87,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     await container.stopContainer(params.id);
     await instanceService.updateInstance(params.id, {
       status: "stopped",
-      lastActivity: new Date(),
+      lastActivity: Date.now(),
     });
     return { success: true, message: `Container ${params.id} stopped` };
   })
@@ -95,7 +95,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     await container.startContainer(params.id);
     await instanceService.updateInstance(params.id, {
       status: "running",
-      lastActivity: new Date(),
+      lastActivity: Date.now(),
     });
     return { success: true, message: `Container ${params.id} started` };
   })
@@ -116,7 +116,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
     await container.restartContainer(params.id);
     await instanceService.updateInstance(params.id, {
       status: "running",
-      lastActivity: new Date(),
+      lastActivity: Date.now(),
     });
     return { success: true, message: `Container ${params.id} restarted` };
   })
