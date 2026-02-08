@@ -67,3 +67,54 @@ jobs:
           context: ./backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/uphai-backend:latest
+
+  # งานที่ 4: Deploy ไปยัง Server (VPS)
+  deploy:
+    needs: push-docker
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script: |
+            # สร้างโฟลเดอร์โปรเจกต์
+            mkdir -p ~/uphai
+            cd ~/uphai
+            
+            # สร้างไฟล์ docker-compose.yml สำหรับ Production
+            # (ใช้ Image จาก Docker Hub แทนการ Build เอง)
+            cat <<EOF > docker-compose.yml
+            version: '3.8'
+            services:
+              backend:
+                image: ${{ secrets.DOCKER_USERNAME }}/uphai-backend:latest
+                container_name: uphai-backend
+                restart: always
+                ports:
+                  - "3000:3000"
+                volumes:
+                  - /var/run/docker.sock:/var/run/docker.sock
+                environment:
+                  - PORT=3000
+                  - CORS_ORIGIN=http://${{ secrets.HOST }}
+                  - OLLAMA_SERVICE_HOST=host.docker.internal
+                extra_hosts:
+                  - "host.docker.internal:host-gateway"
+            
+              frontend:
+                image: ${{ secrets.DOCKER_USERNAME }}/uphai-frontend:latest
+                container_name: uphai-frontend
+                restart: always
+                ports:
+                  - "80:80"
+                depends_on:
+                  - backend
+            EOF
+            
+            # ดึง Image ใหม่และเริ่มทำงาน
+            docker compose pull
+            docker compose up -d
