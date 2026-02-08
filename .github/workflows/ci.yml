@@ -85,6 +85,13 @@ jobs:
             mkdir -p ~/uphai
             cd ~/uphai
             
+            # 1. สร้างไฟล์ .env (รวมตัวแปรทั้งหมดไว้ที่นี่)
+            cat <<EOF > .env
+            PORT=3000
+            CORS_ORIGIN=http://${{ secrets.HOST }}
+            OLLAMA_SERVICE_HOST=host.docker.internal
+            EOF
+            
             # สร้างไฟล์ docker-compose.yml สำหรับ Production
             # (ใช้ Image จาก Docker Hub แทนการ Build เอง)
             cat <<EOF > docker-compose.yml
@@ -98,10 +105,7 @@ jobs:
                   - "3000:3000"
                 volumes:
                   - /var/run/docker.sock:/var/run/docker.sock
-                environment:
-                  - PORT=3000
-                  - CORS_ORIGIN=http://${{ secrets.HOST }}
-                  - OLLAMA_SERVICE_HOST=host.docker.internal
+                env_file: .env
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
             
