@@ -28,7 +28,7 @@ export async function sendMessage(
   onError: (error: Error) => void
 ): Promise<void> {
   try {
-    const response = await fetch(`http://localhost:${port}/api/chat`, {
+    const response = await fetch(`http://${window.location.hostname}:${port}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ export async function sendMessageSimple(
   messages: Message[],
   options: ChatOptions
 ): Promise<string> {
-  const response = await fetch(`http://localhost:${port}/api/chat`, {
+  const response = await fetch(`http://${window.location.hostname}:${port}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
