@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react';
 import { ProtectedRoute } from '../routes/ProtectedRoute';
 import { Layout } from '@/layouts/Layout';
 import { LoadingPage } from '@/components/LoadingPage';
+import AudioPlayground from '@/pages/AudioPlayground';
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
@@ -26,7 +27,12 @@ export function AppRouter() {
                 <Layout>
                   <ChatPlayground />
                 </Layout>} />
+                <Route path="/playground/audio" element={
+                <Layout>
+                  <AudioPlayground />
+                </Layout>} />
             </Route>
+            
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

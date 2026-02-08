@@ -17,10 +17,26 @@ export async function deployModel(payload: DeployModelPayload) {
   }
 }
 
-export async function getUserInstances(userId: string) {
+export async function getUserInstances(
+  userId: string,
+  options?: { engineId?: string }
+) {
   try {
     const response = await ax.get(`/docker/instances/user/${userId}`);
-    return response.data;
+    const payload = response.data;
+
+    if (
+      options?.engineId &&
+      payload?.success === true &&
+      Array.isArray(payload.data)
+    ) {
+      const filtered = payload.data.filter(
+        (inst: any) => inst?.engineId === options.engineId
+      );
+      return { ...payload, data: filtered, count: filtered.length };
+    }
+
+    return payload;
   } catch (error: any) {
     console.error("Failed to fetch user instances:", error);
     const message = error.response?.data?.error || "Failed to fetch user instances";
