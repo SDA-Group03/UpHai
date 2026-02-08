@@ -43,7 +43,7 @@ interface AudioTask {
 }
 
 const SUPPORTED_LANGUAGES = [
-  { value: 'auto', label: '🌐 Auto Detect' },
+  { value: 'auto', label: 'Auto Detect' },
   { value: 'en', label: '🇺🇸 English' },
   { value: 'th', label: '🇹🇭 Thai' },
   { value: 'zh', label: '🇨🇳 Chinese' },
@@ -468,8 +468,8 @@ export default function AudioPlayground() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="transcribe">📝 Transcribe</SelectItem>
-                    <SelectItem value="translate">🌍 Translate to English</SelectItem>
+                    <SelectItem value="transcribe">Transcribe</SelectItem>
+                    <SelectItem value="translate">Translate to English</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -498,7 +498,7 @@ export default function AudioPlayground() {
               {/* Temperature */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label className="text-sm font-medium text-slate-700">
+                  <Label className="text-sm font-medium  text-slate-700">
                     Temperature
                   </Label>
                   <span className="text-sm text-slate-600 font-mono">{temperature[0].toFixed(1)}</span>
@@ -512,7 +512,7 @@ export default function AudioPlayground() {
                   className="w-full"
                 />
                 <p className="text-xs text-slate-500 mt-1">
-                  {temperature[0] === 0 ? '🎯 Most Accurate' : temperature[0] < 0.5 ? '⚖️ Balanced' : '🎨 Creative'}
+                  {temperature[0] === 0 ? 'Most Accurate' : temperature[0] < 0.5 ? 'Balanced' : 'Creative'}
                 </p>
               </div>
 
@@ -554,7 +554,7 @@ export default function AudioPlayground() {
                               {item.audioFile.name}
                             </div>
                             <div className="text-xs text-slate-500 mt-0.5">
-                              {item.task === 'transcribe' ? '📝' : '🌍'} {new Date(item.timestamp).toLocaleTimeString()}
+                              {new Date(item.timestamp).toLocaleTimeString()}
                             </div>
                           </div>
                         </div>
@@ -709,7 +709,7 @@ export default function AudioPlayground() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="text-sm font-medium text-slate-700">
-                      {task === 'transcribe' ? '📝 Transcription' : '🌍 Translation'}
+                      {task === 'transcribe' ? 'Transcription' : 'Translation'}
                     </div>
                     
                     <div className="flex gap-2">
@@ -788,7 +788,7 @@ export default function AudioPlayground() {
                 </>
               ) : (
                 <>
-                  {task === 'transcribe' ? '📝 Transcribe Audio' : '🌍 Translate to English'}
+                  {task === 'transcribe' ? 'Transcribe Audio' : 'Translate Audio'}
                 </>
               )}
             </Button>
