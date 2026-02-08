@@ -4,6 +4,7 @@ import { ProtectedRoute } from '../routes/ProtectedRoute';
 import { Layout } from '@/layouts/Layout';
 import { LoadingPage } from '@/components/LoadingPage';
 import AudioPlayground from '@/pages/AudioPlayground';
+import VisionPlayground from '@/pages/VisionPlayground';
 // Lazy-loaded pages
 const LoginPage = lazy(() => import('@/pages/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
@@ -26,6 +27,10 @@ export function AppRouter() {
               <Route path="/playground/chat" element={
                 <Layout>
                   <ChatPlayground />
+                </Layout>} />
+              <Route path="/playground/vision" element={
+                <Layout>
+                  <VisionPlayground />
                 </Layout>} />
                 <Route path="/playground/audio" element={
                 <Layout>
