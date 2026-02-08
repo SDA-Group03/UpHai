@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
-// เพิ่ม import service ที่ต้องใช้
 import { getDeployedInstances, terminateInstances, stopInstances, startInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
@@ -18,9 +17,28 @@ export interface DeployedModel {
   lastActive: string;
   categories: string;
   icon?: string;
+  startedAt?: string;
 }
 
 type ModelData = DeployedModel;
+
+// ฟังก์ชันคำนวณ uptime แบบ real-time
+function calculateUptime(startedAt: string | undefined, status: ModelStatus): string {
+  if (!startedAt || status !== "running") {
+    return "0s";
+  }
+
+  const ms = Date.now() - new Date(startedAt).getTime();
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+
+  if (d > 0) return `${d}d ${h % 24}h`;
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+}
 
 async function fetchModels(): Promise<ModelData[]> {
   try {
@@ -30,7 +48,7 @@ async function fetchModels(): Promise<ModelData[]> {
     // 2. Get Instances
     const response = await getDeployedInstances(userProfile.id.toString());
 
-    console.log("API Response for Instances:", response); // Check your console to see the real structure!
+    console.log("API Response for Instances:", response);
 
     let instances: any[] = [];
 
@@ -42,7 +60,7 @@ async function fetchModels(): Promise<ModelData[]> {
       instances = response.instances;
     } else {
       console.warn("Unexpected API response structure. Expected array, got:", response);
-      return []; // Return empty array so the UI doesn't crash
+      return [];
     }
 
     // 4. Map the data safely
@@ -53,13 +71,14 @@ async function fetchModels(): Promise<ModelData[]> {
       size: inst.size || "Standard",
       status: (inst.status as ModelStatus) || "stopped",
       endpoint: inst.endpoint || "Pending...",
-      uptime: inst.uptime || "0h 0m",
+      uptime: inst.uptime || "0s",
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
+      startedAt: inst.startedAt, // เก็บ timestamp
     }));
   } catch (error) {
     console.error("Failed to fetch models:", error);
-    throw error; // Re-throw so the UI shows the error state
+    throw error;
   }
 }
 
@@ -71,6 +90,18 @@ interface ModelCardProps {
 }
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTerminate }) => {
+  // State สำหรับ real-time uptime
+  const [currentUptime, setCurrentUptime] = useState(model.uptime);
+
+  // Update uptime ทุกวินาที
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentUptime(calculateUptime(model.startedAt, model.status));
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [model.startedAt, model.status]);
+
   const getStatusBadge = () => {
     switch (model.status) {
       case "running":
@@ -114,7 +145,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
       <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
         <div>
           <p className="text-xs text-gray-500 mb-1">Uptime</p>
-          <p className="text-sm font-semibold text-gray-900">{model.uptime}</p>
+          <p className="text-sm font-semibold text-gray-900">{currentUptime}</p>
         </div>
 
         <div>
@@ -167,15 +198,28 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
 
 export default function Dashboard() {
   // State management
-  const [models, setModels] = useState<DeployedModel[]>([]); // เริ่มต้นด้วย Array ว่าง
+  const [models, setModels] = useState<DeployedModel[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ModelStatus | "all">("all");
 
+  // ฟังก์ชันสำหรับ fetch ข้อมูล (แยกออกมาเพื่อใช้ซ้ำ)
+  const loadModels = async () => {
+    try {
+      const data = await fetchModels();
+      setModels(data);
+      setError(null);
+    } catch (err: any) {
+      console.error("Error fetching models:", err);
+      setError(err.message || "An unknown error occurred while fetching models.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleTerminate = async (id: string) => {
-    // 1. Confirm ก่อนลบ
     const confirmTerminate = window.confirm(
       "Are you sure you want to terminate this model? This action cannot be undone.",
     );
@@ -183,12 +227,9 @@ export default function Dashboard() {
     if (!confirmTerminate) return;
 
     try {
-      // 2. เรียก API (ส่ง ID ไป)
       await terminateInstances(id);
-
       setModels((prevModels) => prevModels.filter((model) => model.id !== id));
     } catch (err: any) {
-      // 4. Error handling
       console.error("Failed to terminate:", err);
       alert(err.message || "Failed to terminate the instance. Please try again.");
     }
@@ -197,33 +238,40 @@ export default function Dashboard() {
   // Fetch Data on Mount
   useEffect(() => {
     setIsLoading(true);
-    fetchModels()
-      .then((data) => {
-        setModels(data);
-        setError(null);
-      })
-      .catch((err) => {
-        console.error("Error fetching models:", err);
-        setError(err.message || "An unknown error occurred while fetching models.");
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+    loadModels();
   }, []);
 
-  // Action handlers (Optimistic UI updates - ในการใช้งานจริงอาจต้องยิง API ด้วย)
+  // Auto-refresh ทุก 1 นาที (60000ms)
+  useEffect(() => {
+    const refreshInterval = setInterval(() => {
+      console.log("Auto-refreshing models data...");
+      loadModels();
+    }, 60000); // 60 วินาที
+
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  // Action handlers
   const handleStart = async (id: string) => {
-    await startInstances(id);
-    setModels((prev) =>
-      prev.map((model) => (model.id === id ? { ...model, status: "running" as ModelStatus } : model)),
-    );
+    try {
+      await startInstances(id);
+      // Refresh ข้อมูลหลังจาก start
+      await loadModels();
+    } catch (err) {
+      console.error("Failed to start:", err);
+      alert("Failed to start the instance. Please try again.");
+    }
   };
 
   const handleStop = async (id: string) => {
-    await stopInstances(id);
-    setModels((prev) =>
-      prev.map((model) => (model.id === id ? { ...model, status: "stopped" as ModelStatus, uptime: "0h" } : model)),
-    );
+    try {
+      await stopInstances(id);
+      // Refresh ข้อมูลหลังจาก stop
+      await loadModels();
+    } catch (err) {
+      console.error("Failed to stop:", err);
+      alert("Failed to stop the instance. Please try again.");
+    }
   };
 
   // Filter logic
@@ -299,7 +347,10 @@ export default function Dashboard() {
             <p className="font-semibold">Error Loading Data</p>
             <p>{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                setIsLoading(true);
+                loadModels();
+              }}
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
             >
               Retry

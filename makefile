@@ -88,7 +88,7 @@ dev:
 
 dev-be:
 	@echo "[...] Starting Backend (Bun)..."
-	@cd $(BACKEND_DIR) && bun run index.ts
+	@cd $(BACKEND_DIR)/src && bun run index.ts
 
 dev-fe:
 	@echo "[...] Starting Frontend (Vite)..."
