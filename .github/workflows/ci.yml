@@ -16,11 +16,11 @@ jobs:
         working-directory: ./frontend
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v1
         with:
-          node-version: '20'
-      - run: npm install
-      - run: npm run build
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run build
 
   # งานที่ 2: ตรวจสอบฝั่ง Backend (Elysia มักใช้ Bun)
   build-backend:
@@ -33,7 +33,7 @@ jobs:
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      - run: bun install
+      - run: bun install --frozen-lockfile
       # ถ้ามี test ให้เปิดบรรทัดนี้
       # - run: bun test
 
