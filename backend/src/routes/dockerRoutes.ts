@@ -39,10 +39,11 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
         return {
           ...inst,
           containerStatus: info?.status || "unknown",
-          startedAt: info?.startedAt || null, // ส่ง timestamp กลับมาด้วย
+          startedAt: info?.startedAt || null,
           uptime: stats?.uptime || "0s",
           cpuUsage: stats?.cpuUsage || 0,
           memoryUsage: stats?.memoryUsage || 0,
+          lastActiveAt: inst.lastActivity ? new Date(inst.lastActivity).toISOString() : null,
         };
       }),
     );
@@ -67,6 +68,11 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       set.status = 404;
       return { success: false, error: `Container ${params.id} not found` };
     }
+
+    await instanceService.updateInstance(params.id, {
+      lastActivity: new Date(),
+    });
+
     return { success: true, data: { ...dbInstance, container: containerInfo } };
   })
   .get("/instances/:id/stats", async ({ params, set }) => {
@@ -79,12 +85,18 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
   })
   .post("/instances/:id/stop", async ({ params }) => {
     await container.stopContainer(params.id);
-    await instanceService.updateInstance(params.id, { status: "stopped" });
+    await instanceService.updateInstance(params.id, {
+      status: "stopped",
+      lastActivity: new Date(),
+    });
     return { success: true, message: `Container ${params.id} stopped` };
   })
   .post("/instances/:id/start", async ({ params }) => {
     await container.startContainer(params.id);
-    await instanceService.updateInstance(params.id, { status: "running" });
+    await instanceService.updateInstance(params.id, {
+      status: "running",
+      lastActivity: new Date(),
+    });
     return { success: true, message: `Container ${params.id} started` };
   })
   .post("/instances/:id/terminate", async ({ params, set }) => {
@@ -102,7 +114,10 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
   })
   .post("/instances/:id/restart", async ({ params }) => {
     await container.restartContainer(params.id);
-    await instanceService.updateInstance(params.id, { status: "running" });
+    await instanceService.updateInstance(params.id, {
+      status: "running",
+      lastActivity: new Date(),
+    });
     return { success: true, message: `Container ${params.id} restarted` };
   })
   .delete("/instances/:id", async ({ params, query }) => {

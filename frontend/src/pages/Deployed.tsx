@@ -18,11 +18,42 @@ export interface DeployedModel {
   categories: string;
   icon?: string;
   startedAt?: string;
+  lastActiveAt?: string;
 }
 
 type ModelData = DeployedModel;
 
-// ฟังก์ชันคำนวณ uptime แบบ real-time
+// ==========================================
+// ฟังก์ชันแสดงเวลาแบบ relative (เช่น "5 นาทีที่แล้ว")
+// ==========================================
+function getRelativeTime(timestamp: string | undefined): string {
+  if (!timestamp) return "ไม่เคยใช้งาน";
+
+  const now = Date.now();
+  const then = new Date(timestamp).getTime();
+  const diffMs = now - then;
+
+  if (diffMs < 0) return "lately";
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 10) return "lately";
+  if (seconds < 60) return `${seconds} s`;
+  if (minutes === 1) return "1 m";
+  if (minutes < 60) return `${minutes} m`;
+  if (hours === 1) return "1 h";
+  if (hours < 24) return `${hours} h`;
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}
+
+// ฟังก์ชันคำนวณ uptime
 function calculateUptime(startedAt: string | undefined, status: ModelStatus): string {
   if (!startedAt || status !== "running") {
     return "0s";
@@ -40,7 +71,6 @@ function calculateUptime(startedAt: string | undefined, status: ModelStatus): st
   return `${s}s`;
 }
 
-// ฟังก์ชันคำนวณว่าผ่านไป 1 นาทีแล้วหรือยัง
 function getUptimeInSeconds(startedAt: string | undefined): number {
   if (!startedAt) return 0;
   return Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
@@ -75,6 +105,7 @@ async function fetchModels(): Promise<ModelData[]> {
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
       startedAt: inst.startedAt,
+      lastActiveAt: inst.lastActiveAt, // รับค่าจาก API
     }));
   } catch (error) {
     console.error("Failed to fetch models:", error);
@@ -91,15 +122,14 @@ interface ModelCardProps {
 
 const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTerminate }) => {
   const [currentUptime, setCurrentUptime] = useState(model.uptime);
+  const [lastActiveDisplay, setLastActiveDisplay] = useState(getRelativeTime(model.lastActiveAt));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentIntervalTypeRef = useRef<"fast" | "slow" | null>(null);
 
-  // 🎯 Progressive Interval Hook
+  // อัพเดท uptime
   useEffect(() => {
-    // Update ทันทีเมื่อ mount
     setCurrentUptime(calculateUptime(model.startedAt, model.status));
 
-    // ถ้าไม่ได้ running ให้ clear interval และออก
     if (model.status !== "running" || !model.startedAt) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -109,42 +139,32 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
       return;
     }
 
-    // ฟังก์ชันสำหรับ setup interval
     const setupInterval = () => {
-      // Clear interval เดิม (ถ้ามี)
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
 
-      // คำนวณว่าควรใช้ interval แบบไหน
       const uptimeSeconds = getUptimeInSeconds(model.startedAt);
       const shouldUseFastInterval = uptimeSeconds < 60;
       const intervalMs = shouldUseFastInterval ? 1000 : 30000;
       const intervalType = shouldUseFastInterval ? "fast" : "slow";
 
-      // ถ้า interval type เหมือนเดิมก็ไม่ต้อง log
       if (currentIntervalTypeRef.current !== intervalType) {
-        console.log(`[${model.name}] Using ${intervalType} interval (${intervalMs}ms) - uptime: ${uptimeSeconds}s`);
         currentIntervalTypeRef.current = intervalType;
       }
 
-      // สร้าง interval ใหม่
       intervalRef.current = setInterval(() => {
         setCurrentUptime(calculateUptime(model.startedAt, model.status));
 
-        // ⚡ เช็คว่าต้องเปลี่ยนจาก fast เป็น slow หรือไม่
         const currentUptime = getUptimeInSeconds(model.startedAt);
         if (shouldUseFastInterval && currentUptime >= 60) {
-          console.log(`[${model.name}] Switching from fast (1s) to slow (30s) interval`);
-          setupInterval(); // Re-setup ด้วย interval ใหม่
+          setupInterval();
         }
       }, intervalMs);
     };
 
-    // เริ่ม setup interval
     setupInterval();
 
-    // Cleanup function
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -152,6 +172,30 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
       }
     };
   }, [model.startedAt, model.status, model.name]);
+
+  // อัพเดท last active ทุก 30 วินาที
+  useEffect(() => {
+    setLastActiveDisplay(getRelativeTime(model.lastActiveAt));
+
+    const interval = setInterval(() => {
+      setLastActiveDisplay(getRelativeTime(model.lastActiveAt));
+    }, 30000); // อัพเดททุก 30 วินาที
+
+    return () => clearInterval(interval);
+  }, [model.lastActiveAt]);
+
+  // กำหนดสีตาม last active
+  const getLastActiveColor = () => {
+    if (!model.lastActiveAt) return "text-gray-500";
+
+    const diffMs = Date.now() - new Date(model.lastActiveAt).getTime();
+    const minutes = diffMs / (60 * 1000);
+
+    if (minutes < 5) return "text-green-600"; // เพิ่งใช้งาน
+    if (minutes < 30) return "text-blue-600"; // ใช้งานไม่นาน
+    if (minutes < 60) return "text-yellow-600"; // ใช้งานพอสมควร
+    return "text-gray-600"; // ไม่ได้ใช้งานนาน
+  };
 
   const getStatusBadge = () => {
     switch (model.status) {
@@ -201,7 +245,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
 
         <div>
           <p className="text-xs text-gray-500 mb-1">Last Active</p>
-          <p className="text-sm font-semibold text-gray-900">{model.lastActive}</p>
+          <p className={`text-sm font-semibold ${getLastActiveColor()}`}>{lastActiveDisplay}</p>
         </div>
       </div>
 
