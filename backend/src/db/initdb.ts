@@ -1,6 +1,12 @@
 import { Database } from "bun:sqlite";
+import fs from "node:fs";
 
-export const db = new Database("voke.sqlite", { create: true });
+// ตรวจสอบว่ามีโฟลเดอร์ data หรือไม่ ถ้าไม่มีให้สร้างใหม่
+if (!fs.existsSync("data")) {
+  fs.mkdirSync("data");
+}
+
+export const db = new Database("data/voke.sqlite", { create: true });
 
 export function initDB() {
   console.log("📂 Initializing Database...");

@@ -105,6 +105,7 @@ jobs:
                   - "3000:3000"
                 volumes:
                   - /var/run/docker.sock:/var/run/docker.sock
+                  - ./uphai_data:/app/data
                 env_file: .env
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
