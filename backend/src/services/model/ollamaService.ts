@@ -41,6 +41,19 @@ const waitForService = async (host: string, port: string | number) => {
   throw new Error("Ollama start timeout");
 };
 
+// สั่ง pull model เข้า container — ถ้ามีใน volume แล้วจะเร็วมาก ถ้าไม่มีจะโหลดจาก registry
+const pullModel = async (host: string, port: string | number, model: string) => {
+  const res = await fetch(`http://${host}:${port}/api/pull`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: model, stream: false }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Failed to pull model '${model}': ${res.status} ${text}`);
+  }
+};
+
 export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<ChatInstanceResult> => {
   await ensureImage();
 
@@ -65,6 +78,7 @@ export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<Cha
     const containerIp = data.NetworkSettings.Networks[DOCKER_NETWORK]?.IPAddress;
     if (!containerIp) throw new Error("Container IP not found on network");
     await waitForService(containerIp, 11434);
+    await pullModel(containerIp, 11434, modelName);
     const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "11434";
     return { containerId: container.id, port, model: modelName };
   }
@@ -74,6 +88,7 @@ export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<Cha
   const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort;
   if (!port) throw new Error("Port not found");
   await waitForService("localhost", port);
+  await pullModel("localhost", port, modelName);
 
   return { containerId: container.id, port, model: modelName };
 };
