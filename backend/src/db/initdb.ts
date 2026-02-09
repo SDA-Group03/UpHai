@@ -11,10 +11,8 @@ export const db = new Database("data/voke.sqlite", { create: true });
 export function initDB() {
   console.log("📂 Initializing Database...");
 
-  db.run(`DROP TABLE IF EXISTS instances;`);
   db.run(`DROP TABLE IF EXISTS models;`);
   db.run(`DROP TABLE IF EXISTS engines;`);
-  db.run(`DROP TABLE IF EXISTS users;`);
 
   // 1. สร้างตาราง Users (ตารางหลัก)
   db.run(`
