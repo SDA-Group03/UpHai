@@ -1,4 +1,6 @@
 // Chat Service สำหรับเชื่อมต่อกับ Ollama API ผ่าน backend proxy
+import { getAccessToken } from './authService';
+
 const normalizeApiOrigin = (value: string) => {
   const normalized = value.trim().replace(/\/+$/, '');
   return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
@@ -6,6 +8,11 @@ const normalizeApiOrigin = (value: string) => {
 
 const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? '');
 const OLLAMA_PROXY_BASE_URL = `${apiOrigin}/api/ollama`;
+
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export interface Message {
   id: string;
@@ -40,6 +47,7 @@ export async function sendMessage(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders(),
       },
       body: JSON.stringify({
         model: options.model,
@@ -114,6 +122,7 @@ export async function sendMessageSimple(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...authHeaders(),
     },
     body: JSON.stringify({
       model: options.model,
@@ -147,6 +156,7 @@ export async function checkOllamaHealth(port: number | string): Promise<boolean>
   try {
     const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/health?port=${port}`, {
       method: 'GET',
+      headers: authHeaders(),
       signal: AbortSignal.timeout(5000),
     });
 

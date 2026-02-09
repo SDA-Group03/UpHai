@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { resolveUpstream } from './proxyUtils';
+import { checkAccessToken } from '../middleware/auth';
 
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -9,6 +10,13 @@ const parsePort = (raw: unknown): number | null => {
 };
 
 export const ollamaProxyRoutes = new Elysia({ prefix: '/api/ollama' })
+  .onBeforeHandle(({ request, set }) => {
+    const auth = checkAccessToken(Object.fromEntries(request.headers));
+    if (!auth.ok) {
+      set.status = 401;
+      return { error: 'Unauthorized' };
+    }
+  })
   .get('/health', async ({ query, set }) => {
     const port = parsePort((query as any)?.port);
     if (!port) {

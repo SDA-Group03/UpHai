@@ -2,6 +2,12 @@
  * Whisper API Service with CORS handling
  * OpenAI-compatible API for transcription and translation
  */
+import { getAccessToken } from './authService';
+
+function authHeaders(): Record<string, string> {
+  const token = getAccessToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const normalizeApiOrigin = (value: string) => {
   const normalized = value.trim().replace(/\/+$/, '');
@@ -64,6 +70,7 @@ export async function transcribeAudio(
   try {
     const response = await fetch(`${WHISPER_PROXY_BASE_URL}/audio/transcriptions?port=${port}`, {
       method: 'POST',
+      headers: authHeaders(),
       body: formData,
       mode: 'cors',
       credentials: 'omit',
@@ -135,6 +142,7 @@ export async function translateAudio(
   try {
     const response = await fetch(`${WHISPER_PROXY_BASE_URL}/audio/translations?port=${port}`, {
       method: 'POST',
+      headers: authHeaders(),
       body: formData,
       mode: 'cors',
       credentials: 'omit',
@@ -247,6 +255,7 @@ export async function checkWhisperHealth(port: number): Promise<boolean> {
     
     const response = await fetch(`${WHISPER_PROXY_BASE_URL}/health?port=${port}`, {
       method: 'GET',
+      headers: authHeaders(),
       mode: 'cors',
       credentials: 'omit',
       signal: controller.signal,
