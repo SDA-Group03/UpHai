@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getUserInstances } from '@/services/dockerService';
 import { fetchProfile } from '@/services/authService';
+import ax from '@/conf/ax';
 import type { Message as VisionMessage } from '@/lib/types';
 
 export interface VisionInstance {
   id: string;
   modelId: string;
   modelName: string | null;
+  modelCategory?: string | null;
   containerName: string;
   port: number;
   status: string;
@@ -131,12 +133,16 @@ export const useVisionPlayground = () => {
         throw new Error('URL must start with http:// or https://');
       }
 
-      const response = await fetch(url.toString());
-      if (!response.ok) {
+      const response = await ax.get(url.toString(), {
+        responseType: 'blob',
+        validateStatus: () => true,
+      });
+
+      if (response.status < 200 || response.status >= 300) {
         throw new Error(`Failed to fetch image (HTTP ${response.status})`);
       }
 
-      const blob = await response.blob();
+      const blob = response.data as Blob;
       if (!blob.type.startsWith('image/')) {
         throw new Error('URL does not point to an image');
       }
@@ -299,8 +305,11 @@ export const useVisionPlayground = () => {
         const instances = Array.isArray(response.data)
           ? (response.data as VisionInstance[])
           : [];
-        setVisionInstances(instances);
-        if (instances.length > 0) setSelectedInstance(instances[0]);
+        const visionOnly = instances.filter(
+          (inst) => String(inst.modelCategory ?? '').toLowerCase() === 'vision'
+        );
+        setVisionInstances(visionOnly);
+        if (visionOnly.length > 0) setSelectedInstance(visionOnly[0]);
       } catch (err) {
         console.error('Failed to fetch instances:', err);
         setError('Failed to load instances');
@@ -312,10 +321,12 @@ export const useVisionPlayground = () => {
 
   const checkHealth = async (port: number): Promise<boolean> => {
     try {
-      const response = await fetch(
-        `http://${window.location.hostname}:${port}/api/tags`
-      );
-      return response.ok;
+      const response = await ax.get('/ollama/tags', {
+        params: { port },
+        timeout: 5000,
+        validateStatus: () => true,
+      });
+      return response.status >= 200 && response.status < 300;
     } catch {
       return false;
     }
@@ -404,41 +415,12 @@ export const useVisionPlayground = () => {
         ...(imagesToSend.length > 0 ? { images: imagesToSend } : {}),
       });
 
-      const response = await fetch(
-        `http://${window.location.hostname}:${selectedInstance.port}/api/chat`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: selectedInstance.modelName || selectedInstance.modelId,
-            messages: apiMessages,
-            stream: true,
-            options: {
-              temperature: temperature[0],
-              num_predict: Math.max(1, maxTokens),
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Response body is not readable');
-      }
-
-      const decoder = new TextDecoder();
+      let lastResponseLength = 0;
       let buffer = '';
       let fullResponse = '';
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
+      const processText = (text: string) => {
+        buffer += text;
         const lines = buffer.split('\n');
         buffer = lines.pop() || '';
 
@@ -458,7 +440,40 @@ export const useVisionPlayground = () => {
             console.error('Error parsing JSON:', e);
           }
         }
+      };
+
+      const response = await ax.post(
+        '/ollama/chat',
+        {
+          model: selectedInstance.modelName || selectedInstance.modelId,
+          messages: apiMessages,
+          stream: true,
+          options: {
+            temperature: temperature[0],
+            num_predict: Math.max(1, maxTokens),
+          },
+        },
+        {
+          params: { port: selectedInstance.port },
+          responseType: 'text',
+          transformResponse: (v) => v,
+          validateStatus: () => true,
+          onDownloadProgress: (pe: any) => {
+            const xhr = pe?.event?.currentTarget as XMLHttpRequest | undefined;
+            const responseText = xhr?.responseText;
+            if (typeof responseText !== 'string') return;
+            const chunk = responseText.substring(lastResponseLength);
+            lastResponseLength = responseText.length;
+            if (chunk) processText(chunk);
+          },
+        }
+      );
+
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+
+      if (buffer.trim()) processText('\n');
     } catch (err) {
       console.error('Vision chat error:', err);
       const errorMessage =
@@ -540,4 +555,3 @@ export const useVisionPlayground = () => {
     clearImages,
   };
 };
-

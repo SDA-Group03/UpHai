@@ -41,6 +41,7 @@ export class InstanceService {
         engineId: instances.engineId,
         modelId: instances.modelId,
         modelName: models.name, // <-- get the model name
+        modelCategory: models.category,
         containerName: instances.containerName,
         port: instances.port,
         status: instances.status,
