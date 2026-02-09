@@ -38,15 +38,22 @@ const waitForService = async (port: string) => {
   throw new Error("Ollama start timeout");
 };
 
-export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<ChatInstanceResult> => {
+export const createOllamaInstance = async (
+  modelName = "qwen:0.5b",
+  memoryMb = 4096
+): Promise<ChatInstanceResult> => {
   await ensureImage();
+
+  const memoryBytes = memoryMb * 1024 * 1024;
+  // CPU allocation not implemented yet
 
   const container = await docker.createContainer({
     Image: "ollama/ollama",
     Tty: true,
     HostConfig: {
       PortBindings: { "11434/tcp": [{ HostPort: "" }] },
-      Memory: 4 * 1024 * 1024 * 1024,
+      Memory: memoryBytes,
+      // NanoCpus: nanoCpus, // TODO: implement CPU allocation
       Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
     },
   });

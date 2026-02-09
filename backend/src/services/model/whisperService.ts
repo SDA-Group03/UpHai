@@ -38,8 +38,14 @@ const waitForService = async (port: string) => {
   throw new Error("Whisper start timeout");
 };
 
-export const createWhisperInstance = async (modelName = "base"): Promise<WhisperInstanceResult> => {
+export const createWhisperInstance = async (
+  modelName = "base",
+  memoryMb = 2048
+): Promise<WhisperInstanceResult> => {
   await ensureImage();
+
+  const memoryBytes = memoryMb * 1024 * 1024;
+  // CPU allocation not implemented yet
 
   const container = await docker.createContainer({
     Image: "fedirz/faster-whisper-server:latest-cpu",
@@ -47,7 +53,8 @@ export const createWhisperInstance = async (modelName = "base"): Promise<Whisper
     Tty: true,
     HostConfig: {
       PortBindings: { "8000/tcp": [{ HostPort: "" }] },
-      Memory: 2 * 1024 * 1024 * 1024,
+      Memory: memoryBytes,
+      // NanoCpus: nanoCpus, // TODO: implement CPU allocation
       Binds: [`${WHISPER_VOLUME}:/root/.cache/whisper:ro`],
     },
   });
