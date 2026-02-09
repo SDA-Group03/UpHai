@@ -46,7 +46,7 @@ export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<Cha
     Tty: true,
     HostConfig: {
       PortBindings: { "11434/tcp": [{ HostPort: "" }] },
-      Memory: 1024 * 1024 * 1024,
+      Memory: 4 * 1024 * 1024 * 1024,
       Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
     },
   });

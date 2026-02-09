@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getUserInstances } from '@/services/dockerService';
 import { fetchProfile } from '@/services/authService';
 import { useInterval } from 'react-use';
-import { useChatHistory } from '../services/useChatHistory';
+import { useChatHistory } from '../hooks/useChatHistory';
 import type { ChatOptions } from '../services/chatService';
 import { sendMessage, checkOllamaHealth } from '../services/chatService';
 
@@ -198,10 +198,10 @@ export default function ChatPlayground() {
 
   return (
     <TooltipProvider>
-      <div className="flex h-screen bg-slate-50">
+      <div className="flex h-full min-h-0 bg-slate-50 overflow-hidden">
         {/* Left Panel - Controls */}
-        <div className="max-w-[262px] min-w-[262px] bg-transparent border-r border-slate-200 flex flex-col">
-          <ScrollArea className="flex-1 p-5 pb-2.5 pl-0 pr-2 overflow-y-auto overflow-x-hidden">
+        <div className="w-[262px] bg-transparent border-r border-slate-200 flex flex-col min-h-0">
+          <ScrollArea className="flex-1 min-h-0 p-5 pb-2.5 pl-0 pr-2">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col gap-3">
                 {/* Instance Selection */}
@@ -438,9 +438,9 @@ export default function ChatPlayground() {
         <div className="min-w-[1px] my-[8px]" style={{background: 'linear-gradient(to bottom, rgb(252, 252, 252), rgb(230, 230, 230), rgb(252, 252, 252)), rgb(230, 230, 230)'}} />
 
         {/* Right Panel - Chat Area */}
-        <div className="flex-1 flex flex-col h-full box-border overflow-hidden">
+        <div className="flex-1 min-w-0 min-h-0 flex flex-col h-full box-border overflow-hidden">
           {/* Chat Messages Area */}
-          <ScrollArea className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="w-full box-border py-2 pt-0 text-sm flex flex-col px-4">
               {/* Model Badge */}
               <div className="h-[36px] bg-slate-100 rounded-md flex items-center px-3 justify-between mb-4">

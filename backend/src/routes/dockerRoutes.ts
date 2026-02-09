@@ -56,7 +56,10 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       return { success: false, error: `Container ${params.id} not found` };
     }
 
-    return { success: true, data: { ...dbInstance, container: containerInfo } };
+    return {
+      success: true,
+      data: { ...(dbInstance ?? {}), container: containerInfo },
+    };
   })
 
   .get("/instances/:id/stats", async ({ params, set }) => {
