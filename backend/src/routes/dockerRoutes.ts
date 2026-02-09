@@ -12,13 +12,21 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
         set.status = 400;
         return { success: false, error: "userId is required" };
       }
-      const result = await createContainerByEngine(body);
-      set.status = 201;
-      return {
-        success: true,
-        data: result,
-        message: `${body.engine}/${body.modelName} deployed`,
-      };
+      try {
+        const result = await createContainerByEngine(body);
+        set.status = 201;
+        return {
+          success: true,
+          data: result,
+          message: `${body.engine}/${body.modelName} deployed`,
+        };
+      } catch (error) {
+        set.status = 500;
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : "Deployment failed",
+        };
+      }
     },
     {
       body: t.Object({

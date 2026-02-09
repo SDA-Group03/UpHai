@@ -35,4 +35,3 @@ export const REFRESH_TOKEN_COOKIE_SECURE =
 
 export const PORT = parseNumber(process.env.PORT, 3000);
 export const CORS_ORIGIN = process.env.CORS_ORIGIN ?? true;
-export const OLLAMA_SERVICE_HOST = process.env.OLLAMA_SERVICE_HOST || 'localhost';

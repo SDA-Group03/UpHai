@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia';
+import { resolveUpstream } from './proxyUtils';
 
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -25,7 +26,8 @@ async function proxyWhisperMultipart(
     formData.append(key, value as any);
   }
 
-  const upstream = await fetch(`http://127.0.0.1:${port}${path}`, {
+  const url = await resolveUpstream(port, path);
+  const upstream = await fetch(url, {
     method: 'POST',
     body: formData,
   });
@@ -66,9 +68,10 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
     }
 
     try {
+      const url = await resolveUpstream(port, '/');
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(`http://127.0.0.1:${port}/`, { signal: controller.signal });
+      const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       return { ok: res.ok };
     } catch (error: any) {
@@ -104,4 +107,3 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
       return { error: error?.message ?? 'Failed to proxy translation request' };
     }
   });
-
