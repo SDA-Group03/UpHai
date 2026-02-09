@@ -66,16 +66,29 @@ export class InstanceService {
   }
 
   async updateInstance(id: string, data: { status?: string; lastActivity?: number }) {
+    const lastActivityDate =
+      typeof data.lastActivity === "number"
+        ? // Accept either unix seconds or epoch milliseconds
+          new Date(data.lastActivity > 10_000_000_000 ? data.lastActivity : data.lastActivity * 1000)
+        : new Date();
+
     const [result] = await db
       .update(instances)
       .set({
         ...data,
-        lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(),
+        lastActivity: lastActivityDate,
       })
       .where(eq(instances.id, id))
       .returning();
 
     return result;
+  }
+
+  async touchInstanceByPort(port: number) {
+    await db
+      .update(instances)
+      .set({ lastActivity: new Date() })
+      .where(eq(instances.port, port));
   }
 
   async deleteInstance(id: string) {

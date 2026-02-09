@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { resolveUpstream } from './proxyUtils';
+import { instanceService } from '../services/instanceService';
 
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -86,6 +87,8 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
       return { error: 'Invalid port' };
     }
 
+    void instanceService.touchInstanceByPort(port).catch(() => {});
+
     try {
       return await proxyWhisperMultipart(port, '/v1/audio/transcriptions', request);
     } catch (error: any) {
@@ -99,6 +102,8 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
       set.status = 400;
       return { error: 'Invalid port' };
     }
+
+    void instanceService.touchInstanceByPort(port).catch(() => {});
 
     try {
       return await proxyWhisperMultipart(port, '/v1/audio/translations', request);
