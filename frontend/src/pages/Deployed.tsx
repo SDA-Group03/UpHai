@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle } from "lucide-react";
+import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle, X } from "lucide-react";
 import { getDeployedInstances, terminateInstances, stopInstances, startInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
@@ -22,6 +22,95 @@ export interface DeployedModel {
 }
 
 type ModelData = DeployedModel;
+
+// ==========================================
+// SHADCN/UI COMPONENTS (Inline)
+// ==========================================
+
+// Alert Dialog Component
+interface AlertDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  confirmText?: string;
+  cancelText?: string;
+}
+
+const AlertDialog: React.FC<AlertDialogProps> = ({
+  open,
+  onOpenChange,
+  title,
+  description,
+  onConfirm,
+  confirmText = "Continue",
+  cancelText = "Cancel",
+}) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6 z-50">
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">{title}</h2>
+        <p className="text-sm text-gray-600 mb-6">{description}</p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            {cancelText}
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onOpenChange(false);
+            }}
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+          >
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Alert Component
+interface AlertProps {
+  variant?: "default" | "destructive";
+  title?: string;
+  description: string;
+  onClose: () => void;
+}
+
+const Alert: React.FC<AlertProps> = ({ variant = "destructive", title, description, onClose }) => {
+  const bgColor = variant === "destructive" ? "bg-red-50 border-red-200" : "bg-blue-50 border-blue-200";
+  const iconColor = variant === "destructive" ? "text-red-600" : "text-blue-600";
+  const textColor = variant === "destructive" ? "text-red-900" : "text-blue-900";
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-50 ${bgColor} border rounded-lg p-4 shadow-lg max-w-md animate-in slide-in-from-top-2`}
+    >
+      <div className="flex items-start gap-3">
+        <AlertCircle className={`${iconColor} mt-0.5 flex-shrink-0`} size={20} />
+        <div className="flex-1">
+          {title && <h3 className={`font-semibold ${textColor} mb-1`}>{title}</h3>}
+          <p className={`text-sm ${textColor}`}>{description}</p>
+        </div>
+        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <X size={18} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 // ==========================================
 // ฟังก์ชันแสดงเวลาแบบ relative (เช่น "5 นาทีที่แล้ว")
@@ -105,7 +194,7 @@ async function fetchModels(): Promise<ModelData[]> {
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
       startedAt: inst.startedAt,
-      lastActiveAt: inst.lastActiveAt, // รับค่าจาก API
+      lastActiveAt: inst.lastActiveAt,
     }));
   } catch (error) {
     console.error("Failed to fetch models:", error);
@@ -179,7 +268,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
 
     const interval = setInterval(() => {
       setLastActiveDisplay(getRelativeTime(model.lastActiveAt));
-    }, 30000); // อัพเดททุก 30 วินาที
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [model.lastActiveAt]);
@@ -191,10 +280,10 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
     const diffMs = Date.now() - new Date(model.lastActiveAt).getTime();
     const minutes = diffMs / (60 * 1000);
 
-    if (minutes < 5) return "text-green-600"; // เพิ่งใช้งาน
-    if (minutes < 30) return "text-blue-600"; // ใช้งานไม่นาน
-    if (minutes < 60) return "text-yellow-600"; // ใช้งานพอสมควร
-    return "text-gray-600"; // ไม่ได้ใช้งานนาน
+    if (minutes < 5) return "text-green-600";
+    if (minutes < 30) return "text-blue-600";
+    if (minutes < 60) return "text-yellow-600";
+    return "text-gray-600";
   };
 
   const getStatusBadge = () => {
@@ -298,6 +387,25 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<ModelStatus | "all">("all");
 
+  // Dialog & Alert States
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    modelId: string | null;
+    modelName: string;
+  }>({
+    open: false,
+    modelId: null,
+    modelName: "",
+  });
+
+  const [errorAlert, setErrorAlert] = useState<{
+    open: boolean;
+    message: string;
+  }>({
+    open: false,
+    message: "",
+  });
+
   const loadModels = async () => {
     try {
       const data = await fetchModels();
@@ -312,17 +420,26 @@ export default function Dashboard() {
   };
 
   const handleTerminate = async (id: string) => {
-    const confirmTerminate = window.confirm(
-      "Are you sure you want to terminate this model? This action cannot be undone.",
-    );
-    if (!confirmTerminate) return;
+    const model = models.find((m) => m.id === id);
+    setConfirmDialog({
+      open: true,
+      modelId: id,
+      modelName: model?.name || "this model",
+    });
+  };
+
+  const confirmTerminate = async () => {
+    if (!confirmDialog.modelId) return;
 
     try {
-      await terminateInstances(id);
-      setModels((prevModels) => prevModels.filter((model) => model.id !== id));
+      await terminateInstances(confirmDialog.modelId);
+      setModels((prevModels) => prevModels.filter((model) => model.id !== confirmDialog.modelId));
     } catch (err: any) {
       console.error("Failed to terminate:", err);
-      alert(err.message || "Failed to terminate the instance. Please try again.");
+      setErrorAlert({
+        open: true,
+        message: err.message || "Failed to terminate the instance. Please try again.",
+      });
     }
   };
 
@@ -330,9 +447,12 @@ export default function Dashboard() {
     try {
       await startInstances(id);
       await loadModels();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to start:", err);
-      alert("Failed to start the instance. Please try again.");
+      setErrorAlert({
+        open: true,
+        message: err.message || "Failed to start the instance. Please try again.",
+      });
     }
   };
 
@@ -340,9 +460,12 @@ export default function Dashboard() {
     try {
       await stopInstances(id);
       await loadModels();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to stop:", err);
-      alert("Failed to stop the instance. Please try again.");
+      setErrorAlert({
+        open: true,
+        message: err.message || "Failed to stop the instance. Please try again.",
+      });
     }
   };
 
@@ -358,6 +481,16 @@ export default function Dashboard() {
     }, 60000);
     return () => clearInterval(refreshInterval);
   }, []);
+
+  // Auto-hide error alert after 5 seconds
+  useEffect(() => {
+    if (errorAlert.open) {
+      const timer = setTimeout(() => {
+        setErrorAlert({ open: false, message: "" });
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorAlert.open]);
 
   const filteredModels = models.filter((model) => {
     const matchesSearch =
@@ -454,6 +587,33 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Confirm Dialog */}
+      <AlertDialog
+        open={confirmDialog.open}
+        onOpenChange={(open) =>
+          setConfirmDialog({
+            open,
+            modelId: null,
+            modelName: "",
+          })
+        }
+        title="Terminate Model"
+        description={`Are you sure you want to terminate "${confirmDialog.modelName}"? This action cannot be undone.`}
+        onConfirm={confirmTerminate}
+        confirmText="Terminate"
+        cancelText="Cancel"
+      />
+
+      {/* Error Alert */}
+      {errorAlert.open && (
+        <Alert
+          variant="destructive"
+          title="Error"
+          description={errorAlert.message}
+          onClose={() => setErrorAlert({ open: false, message: "" })}
+        />
+      )}
     </div>
   );
 }
