@@ -3,7 +3,13 @@
  * OpenAI-compatible API for transcription and translation
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const normalizeApiOrigin = (value: string) => {
+  const normalized = value.trim().replace(/\/+$/, '');
+  return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
+};
+
+const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? '');
+const API_BASE_URL = `${apiOrigin}/api`;
 const WHISPER_PROXY_BASE_URL = `${API_BASE_URL}/whisper`;
 
 export interface TranscriptionOptions {
