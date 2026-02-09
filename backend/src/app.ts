@@ -5,6 +5,7 @@ import { dockerRoutes } from './routes/dockerRoutes.ts';
 import { modelRoutes } from './routes/modelRoutes.ts';
 import { whisperProxyRoutes } from './routes/whisperProxyRoutes.ts';
 import { ollamaProxyRoutes } from './routes/ollamaProxyRoutes.ts';
+import { apiKeyRoutes } from './routes/apiKeyRoutes.ts';
 import { CORS_ORIGIN } from './config/env.ts';
 
 export const app = new Elysia()
@@ -19,4 +20,5 @@ export const app = new Elysia()
   .use(dockerRoutes)
   .use(modelRoutes)
   .use(whisperProxyRoutes)
-  .use(ollamaProxyRoutes);
+  .use(ollamaProxyRoutes)
+  .use(apiKeyRoutes);
