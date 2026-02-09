@@ -11,10 +11,6 @@ export const db = new Database("data/voke.sqlite", { create: true });
 export function initDB() {
   console.log("📂 Initializing Database...");
 
-  // Drop tables for a clean slate in development.
-  db.run(`DROP TABLE IF EXISTS models;`);
-  db.run(`DROP TABLE IF EXISTS engines;`);
-
   db.run(`
     CREATE TABLE IF NOT EXISTS engines (
       id TEXT PRIMARY KEY,
