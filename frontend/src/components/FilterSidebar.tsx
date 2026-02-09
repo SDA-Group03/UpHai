@@ -39,7 +39,7 @@ export const FilterSidebar = () => {
         <FilterGroup
           value="category"
           title="Category"
-          options={["Chat","Coding ", "Vision", "Audio", "Image"]}
+          options={["Chat", "Vision", "Audio"]}
         />
         <FilterGroup
           value="series"

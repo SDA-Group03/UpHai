@@ -5,37 +5,44 @@ import { instanceService } from "../services/instanceService";
 import { getEngineVolumesSummary } from "../services/volumeService";
 
 export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
-  .post(
-    "/instances",
-    async ({ body, set }) => {
-      if (!body.userId) {
-        set.status = 400;
-        return { success: false, error: "userId is required" };
-      }
-      try {
-        const result = await createContainerByEngine(body);
-        set.status = 201;
-        return {
-          success: true,
-          data: result,
-          message: `${body.engine}/${body.modelName} deployed`,
-        };
-      } catch (error) {
-        set.status = 500;
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Deployment failed",
-        };
-      }
-    },
-    {
-      body: t.Object({
-        userId: t.String(),
-        engine: t.String(),
-        modelName: t.String(),
-      }),
-    },
-  )
+  .post("/instances", async ({ body, set }) => {
+    if (!body.userId) {
+      set.status = 400;
+      return { success: false, error: "userId is required" };
+    }
+
+    try {
+      const result = await createContainerByEngine({
+        ...body,
+        resourceConfig: body.resourceConfig,
+      });
+      set.status = 201;
+      return {
+        success: true,
+        data: result,
+        message: `${body.engine}/${body.modelName} deployed`,
+      };
+    } catch (err: any) {
+      set.status = 400;
+      return {
+        success: false,
+        error: err?.message || "Failed to deploy instance",
+      };
+    }
+  }, {
+    body: t.Object({
+      userId: t.String(),
+      engine: t.String(),
+      modelName: t.String(),
+      containerName: t.Optional(t.String()),
+      resourceConfig: t.Optional(t.Object({
+        memoryMb: t.Number(),
+        autoStopMinutes: t.Union([t.Number(), t.Null()]),
+        // cpuCores not implemented on backend
+      })),
+    }),
+  })
+
   .get("/instances/user/:userId", async ({ params }) => {
     const instances = await instanceService.getUserInstances(params.userId);
     const enhanced = await Promise.all(

@@ -9,24 +9,27 @@ export interface CreateInstanceData {
   containerName: string;
   containerId: string;
   port: number;
+  allocatedMemoryMb?: number;
+  // allocatedCpuCores?: number; // TODO: implement backend support
+  autoStopMinutes?: number | null;
 }
 
 export class InstanceService {
   async createInstance(data: CreateInstanceData) {
-    const [result] = await db
-      .insert(instances)
-      .values({
-        id: data.containerId,
-        userId: data.userId,
-        engineId: data.engineId,
-        modelId: data.modelId,
-        containerName: data.containerName,
-        port: data.port,
-        status: "running",
-        createdAt: new Date(),
-        lastActivity: new Date(),
-      })
-      .returning();
+    const [result] = await db.insert(instances).values({
+      id: data.containerId,
+      userId: data.userId,
+      engineId: data.engineId,
+      modelId: data.modelId,
+      containerName: data.containerName,
+      port: data.port,
+      status: "running",
+      allocatedMemoryMb: data.allocatedMemoryMb,
+      // allocatedCpuCores: data.allocatedCpuCores, // TODO: implement backend support
+      autoStopMinutes: data.autoStopMinutes,
+      createdAt: new Date(), 
+      lastActivity: new Date(),
+    }).returning();
 
     return result;
   }
@@ -43,15 +46,19 @@ export class InstanceService {
         userId: instances.userId,
         engineId: instances.engineId,
         modelId: instances.modelId,
-        modelName: models.name, // <-- get the model name
+        modelName: models.name,
+        modelCategory: models.category,
         containerName: instances.containerName,
         port: instances.port,
         status: instances.status,
+        allocatedMemoryMb: instances.allocatedMemoryMb,
+        // allocatedCpuCores: instances.allocatedCpuCores, // TODO: implement backend support
+        autoStopMinutes: instances.autoStopMinutes,
         createdAt: instances.createdAt,
         lastActivity: instances.lastActivity,
       })
       .from(instances)
-      .leftJoin(models, eq(instances.modelId, models.id)) // join models table
+      .leftJoin(models, eq(instances.modelId, models.id))
       .where(eq(instances.userId, userId))
       .orderBy(desc(instances.createdAt));
 

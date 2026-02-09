@@ -1,15 +1,9 @@
 import axios from "axios";
 
-const normalizeApiOrigin = (value: string) => {
-  const normalized = value.trim().replace(/\/+$/, "");
-  return normalized.endsWith("/api") ? normalized.slice(0, -4) : normalized;
-};
-
-const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? "");
+const BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3000`;
 
 const ax = axios.create({
-  baseURL: `${apiOrigin}/api`,
-  timeout: 180_000, // 3 นาที — เผื่อเวลา pull image + start container
+  baseURL: `${BASE_URL}/api`,
   //withCredentials: true
 });
 

@@ -41,59 +41,50 @@ const waitForService = async (host: string, port: string | number) => {
   throw new Error("Ollama start timeout");
 };
 
-// สั่ง pull model เข้า container — ถ้ามีใน volume แล้วจะเร็วมาก ถ้าไม่มีจะโหลดจาก registry
-const pullModel = async (host: string, port: string | number, model: string) => {
-  const res = await fetch(`http://${host}:${port}/api/pull`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: model, stream: false }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`Failed to pull model '${model}': ${res.status} ${text}`);
-  }
-};
-
-export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<ChatInstanceResult> => {
+export const createOllamaInstance = async (
+  modelName = "qwen:0.5b",
+  memoryMb = 4096,
+  containerName?: string
+): Promise<ChatInstanceResult> => {
   await ensureImage();
 
+  const memoryBytes = memoryMb * 1024 * 1024;
+  // CPU allocation not implemented yet
+
   const container = await docker.createContainer({
-    Image: "ollama/ollama",
-    Tty: true,
-    HostConfig: {
-      PortBindings: { "11434/tcp": [{ HostPort: "" }] },
-      Memory: 4 * 1024 * 1024 * 1024,
-      Binds: [`${OLLAMA_VOLUME}:/root/.ollama`],
+    ...(containerName ? { _query: { name: containerName } } : {}),
+    _body: {
+      Image: "ollama/ollama",
+      Tty: true,
+      HostConfig: {
+        PortBindings: { "11434/tcp": [{ HostPort: "" }] },
+        Memory: memoryBytes,
+        // NanoCpus: nanoCpus, // TODO: implement CPU allocation
+        Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
+      },
     },
-  });
+  } as any);
 
   await container.start();
 
-  let hostPort: string;
-  let serviceHost: string;
-  const servicePort = 11434;
-
+  // ถ้ามี DOCKER_NETWORK → connect container เข้า network เดียวกับ backend
+  // แล้ว health check ผ่าน container IP ภายใน network ตรงๆ (ไม่ผ่าน host port)
   if (DOCKER_NETWORK) {
     const network = docker.getNetwork(DOCKER_NETWORK);
     await network.connect({ Container: container.id });
     const data = await container.inspect();
     const containerIp = data.NetworkSettings.Networks[DOCKER_NETWORK]?.IPAddress;
     if (!containerIp) throw new Error("Container IP not found on network");
-    hostPort = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "11434";
-    serviceHost = containerIp;
-  } else {
-    const data = await container.inspect();
-    hostPort = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "";
-    if (!hostPort) throw new Error("Port not found");
-    serviceHost = "localhost";
+    await waitForService(containerIp, 11434);
+    const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "11434";
+    return { containerId: container.id, port, model: modelName };
   }
 
-  // ทำ background — ไม่ block response กลับ frontend
-  // frontend มี health check poll ทุก 30 วิ จะรู้เองว่าพร้อมใช้เมื่อไหร่
-  waitForService(serviceHost, servicePort)
-    .then(() => pullModel(serviceHost, servicePort, modelName))
-    .then(() => console.log(`[ollama] Model '${modelName}' ready (port ${hostPort})`))
-    .catch((err) => console.error(`[ollama] Setup failed (port ${hostPort}):`, err));
+  // local dev: ไม่มี DOCKER_NETWORK → ใช้ host port ตามเดิม
+  const data = await container.inspect();
+  const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort;
+  if (!port) throw new Error("Port not found");
+  await waitForService("localhost", port);
 
-  return { containerId: container.id, port: hostPort, model: modelName };
+  return { containerId: container.id, port, model: modelName };
 };

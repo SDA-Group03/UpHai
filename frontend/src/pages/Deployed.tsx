@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle, X } from "lucide-react";
+import { Play, Square, Trash2, Search, Filter, Loader2, AlertCircle, X, Copy, Check } from "lucide-react";
 import { getDeployedInstances, terminateInstances, stopInstances, startInstances } from "../services/dockerService";
 import { fetchProfile } from "../services/authService";
 
@@ -213,6 +213,7 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
   const [currentUptime, setCurrentUptime] = useState(model.uptime);
   const [lastActiveDisplay, setLastActiveDisplay] = useState(getRelativeTime(model.lastActiveAt));
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
   const currentIntervalTypeRef = useRef<"fast" | "slow" | null>(null);
 
   // อัพเดท uptime
@@ -286,6 +287,12 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
     return "text-gray-600";
   };
 
+  const handleCopyEndpoint = () => {
+    navigator.clipboard.writeText(model.endpoint);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
   const getStatusBadge = () => {
     switch (model.status) {
       case "running":
@@ -341,7 +348,18 @@ const ModelCard: React.FC<ModelCardProps> = ({ model, onStart, onStop, onTermina
       {/* Endpoint */}
       <div className="mb-4">
         <p className="text-xs text-gray-500 mb-1">Endpoint</p>
-        <code className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded block truncate">{model.endpoint}</code>
+        <div className="flex items-center gap-2 bg-gray-100 rounded">
+          <code className="flex-1 text-xs text-gray-800 px-2 py-1 block overflow-x-auto whitespace-nowrap">
+            {model.endpoint}
+          </code>
+          <button
+            onClick={handleCopyEndpoint}
+            className="p-2 text-gray-500 hover:text-gray-800 transition-colors"
+            title="Copy endpoint"
+          >
+            {isCopied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+          </button>
+        </div>
       </div>
 
       {/* Action Buttons */}
