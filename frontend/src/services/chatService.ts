@@ -1,4 +1,12 @@
-// Chat Service สำหรับเชื่อมต่อกับ Ollama API
+// Chat Service สำหรับเชื่อมต่อกับ Ollama API ผ่าน backend proxy
+const normalizeApiOrigin = (value: string) => {
+  const normalized = value.trim().replace(/\/+$/, '');
+  return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
+};
+
+const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? '');
+const OLLAMA_PROXY_BASE_URL = `${apiOrigin}/api/ollama`;
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -28,7 +36,7 @@ export async function sendMessage(
   onError: (error: Error) => void
 ): Promise<void> {
   try {
-    const response = await fetch(`http://${window.location.hostname}:${port}/api/chat`, {
+    const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/chat?port=${port}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +72,7 @@ export async function sendMessage(
 
     while (true) {
       const { done, value } = await reader.read();
-      
+
       if (done) {
         onComplete();
         break;
@@ -72,7 +80,7 @@ export async function sendMessage(
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      
+
       // เก็บบรรทัดสุดท้ายที่ยังไม่เสร็จไว้ใน buffer
       buffer = lines.pop() || '';
 
@@ -102,7 +110,7 @@ export async function sendMessageSimple(
   messages: Message[],
   options: ChatOptions
 ): Promise<string> {
-  const response = await fetch(`http://${window.location.hostname}:${port}/api/chat`, {
+  const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/chat?port=${port}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -133,25 +141,18 @@ export async function sendMessageSimple(
 }
 
 /**
- * สร้าง unique ID สำหรับข้อความ
- */
-/**
  * Check if Ollama service is healthy
  */
 export async function checkOllamaHealth(port: number | string): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-    const response = await fetch(`http://${window.location.hostname}:${port}/api/tags`, {
+    const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/health?port=${port}`, {
       method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      signal: controller.signal,
+      signal: AbortSignal.timeout(5000),
     });
 
-    clearTimeout(timeoutId);
-    return response.ok;
+    if (!response.ok) return false;
+    const data = await response.json().catch(() => null);
+    return Boolean(data?.ok);
   } catch (error) {
     console.error(`Health check failed for port ${port}:`, error);
     return false;

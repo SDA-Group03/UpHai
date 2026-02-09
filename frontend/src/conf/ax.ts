@@ -9,6 +9,7 @@ const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? "");
 
 const ax = axios.create({
   baseURL: `${apiOrigin}/api`,
+  timeout: 180_000, // 3 นาที — เผื่อเวลา pull image + start container
   //withCredentials: true
 });
 

@@ -11,7 +11,7 @@ services:
     environment:
       - PORT=3000
       - CORS_ORIGIN=http://localhost
-      - OLLAMA_SERVICE_HOST=host.docker.internal
+      - DOCKER_NETWORK=uphai_default
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

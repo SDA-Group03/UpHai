@@ -1,5 +1,13 @@
 import type { Message } from "@/lib/types";
 
+const normalizeApiOrigin = (value: string) => {
+    const normalized = value.trim().replace(/\/+$/, '');
+    return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
+};
+
+const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? '');
+const OLLAMA_PROXY_BASE_URL = `${apiOrigin}/api/ollama`;
+
 export interface VisionChatPayload {
     model: string;
     messages: Message[];
@@ -15,7 +23,7 @@ export const streamVisionChat = async (
     payload: VisionChatPayload,
     onChunk: (chunk: string) => void
 ): Promise<void> => {
-    const response = await fetch(`http://localhost:${port}/api/chat`, {
+    const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/chat?port=${port}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
