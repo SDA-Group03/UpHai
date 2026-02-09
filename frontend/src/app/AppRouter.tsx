@@ -54,7 +54,14 @@ export function AppRouter() {
               }
             />
           </Route>
-
+          <Route
+            path="/playground/vision"
+            element={
+              <Layout>
+                <VisionPlayground />
+              </Layout>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
