@@ -11,6 +11,9 @@ export const db = new Database("data/voke.sqlite", { create: true });
 export function initDB() {
   console.log("📂 Initializing Database...");
 
+  db.run(`DROP TABLE IF EXISTS engines;`);
+  db.run(`DROP TABLE IF EXISTS models;`);
+
   db.run(`
     CREATE TABLE IF NOT EXISTS engines (
       id TEXT PRIMARY KEY,
@@ -35,6 +38,10 @@ export function initDB() {
       size_mb INTEGER,
       icon_url TEXT,
       description TEXT,
+      min_memory_mb INTEGER DEFAULT 512,
+      rec_memory_mb INTEGER DEFAULT 2048,
+      min_cpu_cores INTEGER DEFAULT 1,
+      rec_cpu_cores INTEGER DEFAULT 2,
       created_at INTEGER DEFAULT (strftime('%s', 'now'))
     );
   `);
@@ -48,6 +55,9 @@ export function initDB() {
       container_name TEXT NOT NULL,
       port INTEGER NOT NULL,
       status TEXT NOT NULL,
+      allocated_memory_mb INTEGER,
+      allocated_cpu_cores INTEGER,
+      auto_stop_minutes INTEGER,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       last_activity INTEGER DEFAULT (strftime('%s', 'now')),
       FOREIGN KEY (user_id) REFERENCES users(id),
@@ -86,7 +96,7 @@ export function seedDB() {
       { id: 'stable-diffusion', name: 'Stable Diffusion', type: 'image', docker_image: 'voke/stable-diffusion:latest', health_endpoint: '/ping' }
     ];
 
- const models = [
+   const models = [
   // ============= CHAT MODELS - TURBO / NANO =============
   {
     id: 'ollama-qwen2-0.5b',
@@ -97,8 +107,12 @@ export function seedDB() {
     series: 'Qwen',
     performance_tier: 'Turbo / Nano',
     size_mb: 352,
+    min_memory_mb: 512,
+    rec_memory_mb: 1024,
+    min_cpu_cores: 1,
+    rec_cpu_cores: 1,
     description: 'Ultra-lightweight 0.5B model from Alibaba. Blazingly fast and efficient, perfect for edge devices and basic conversational tasks.',
-    icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png' // Original Tongyi Mascot
+    icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png'
   },
   {
     id: 'ollama-qwen2-1.5b',
@@ -109,6 +123,10 @@ export function seedDB() {
     series: 'Qwen',
     performance_tier: 'Turbo / Nano',
     size_mb: 934,
+    min_memory_mb: 1024,
+    rec_memory_mb: 2048,
+    min_cpu_cores: 1,
+    rec_cpu_cores: 2,
     description: 'Efficient 1.5B model balancing size and capability. Offers improved reasoning and understanding for general chat and basic coding assistance.',
     icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png'
   },
@@ -121,8 +139,12 @@ export function seedDB() {
     series: 'Gemma',
     performance_tier: 'Turbo / Nano',
     size_mb: 1400,
+    min_memory_mb: 1536, // ปรับจาก 1024 เพื่อให้รันได้เสถียรขึ้นตามสัดส่วนโมเดล
+    rec_memory_mb: 3072, // ปรับให้ตรงกับตัวเลือก
+    min_cpu_cores: 1,
+    rec_cpu_cores: 2,
     description: 'Google\'s compact 2B model built on Gemini technology. Demonstrates strong context understanding and instruction following ideal for general assistance.',
-    icon_url: 'https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06b.png' // Official Gemma Sparkle
+    icon_url: 'https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06b.png'
   },
 
   // ============= CHAT MODELS - BALANCED =============
@@ -135,8 +157,12 @@ export function seedDB() {
     series: 'Llama',
     performance_tier: 'Balanced',
     size_mb: 2000,
+    min_memory_mb: 2048,
+    rec_memory_mb: 4096,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'Meta\'s optimized 3B model for efficient deployment. Delivers excellent speed and quality with improved instruction following and multilingual support.',
-    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Llama_AI_logo.svg' // Specific Llama Logo (Not Meta)
+    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Llama_AI_logo.svg'
   },
   {
     id: 'ollama-phi3-3.8b',
@@ -147,8 +173,12 @@ export function seedDB() {
     series: 'Phi',
     performance_tier: 'Balanced',
     size_mb: 2300,
+    min_memory_mb: 3072, // ปรับขึ้นจาก 2048 เพื่อความลื่นไหล
+    rec_memory_mb: 4096,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'Microsoft\'s powerful small model. Excels in reasoning, coding, and math, often rivaling larger models despite its compact size.',
-    icon_url: 'https://raw.githubusercontent.com/microsoft/Phi-3/main/assets/phi-logo-square-blue-white.png' // Official Phi Logo
+    icon_url: 'https://raw.githubusercontent.com/microsoft/Phi-3/main/assets/phi-logo-square-blue-white.png'
   },
   {
     id: 'ollama-mistral-7b',
@@ -159,8 +189,12 @@ export function seedDB() {
     series: 'Mistral',
     performance_tier: 'Balanced',
     size_mb: 4100,
+    min_memory_mb: 6144, // ปรับจาก 4096 เพื่อรองรับ context
+    rec_memory_mb: 8192,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'A benchmark 7B model known for efficiency. Uses sliding window attention to deliver exceptional reasoning and general knowledge performance.',
-    icon_url: 'https://mistral.ai/images/logo_hubc88c4ece131b91c7cb753f40e9e1cc5_2589_256x0_resize_q97_h2_lanczos_3.webp' // Official Mistral
+    icon_url: 'https://mistral.ai/images/logo_hubc88c4ece131b91c7cb753f40e9e1cc5_2589_256x0_resize_q97_h2_lanczos_3.webp'
   },
   {
     id: 'ollama-llama3.1-8b',
@@ -171,11 +205,16 @@ export function seedDB() {
     series: 'Llama',
     performance_tier: 'Balanced',
     size_mb: 4700,
+    min_memory_mb: 6144,
+    rec_memory_mb: 8192,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'Meta\'s enhanced 8B model with 128k context support. Features superior reasoning, tool use capability, and robustness in complex multi-turn conversations.',
     icon_url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Llama_AI_logo.svg'
   },
 
   // ============= CHAT MODELS - HIGH PRECISION =============
+  // หมายเหตุ: สำหรับ High Precision แนะนำใช้ Memory สูงสุดที่ระบบมี (8192) ในระดับ CPU
   {
     id: 'ollama-mixtral-8x7b',
     engine: 'ollama',
@@ -185,20 +224,12 @@ export function seedDB() {
     series: 'Mistral',
     performance_tier: 'High Precision',
     size_mb: 26000,
+    min_memory_mb: 8192, // Cap ไว้ที่ตัวเลือกสูงสุด
+    rec_memory_mb: 8192, 
+    min_cpu_cores: 4,
+    rec_cpu_cores: 4,
     description: 'Efficient Mixture-of-Experts (MoE) model. Matches 70B-level performance with faster inference, excelling in multilingual tasks and complex reasoning.',
     icon_url: 'https://mistral.ai/images/logo_hubc88c4ece131b91c7cb753f40e9e1cc5_2589_256x0_resize_q97_h2_lanczos_3.webp'
-  },
-  {
-    id: 'ollama-llama3.3-70b',
-    engine: 'ollama',
-    name: 'llama3.3:70b',
-    display_name: 'Llama 3.3 (70B)',
-    category: 'Chat',
-    series: 'Llama',
-    performance_tier: 'High Precision',
-    size_mb: 43000,
-    description: 'Meta\'s SOTA open model. Delivers expert-level performance in complex reasoning, coding, and creative writing, ideal for demanding production tasks.',
-    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Llama_AI_logo.svg'
   },
 
   // ============= VISION MODELS =============
@@ -211,8 +242,12 @@ export function seedDB() {
     series: 'Moondream',
     performance_tier: 'Turbo / Nano',
     size_mb: 1600,
+    min_memory_mb: 2048,
+    rec_memory_mb: 4096,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'Compact 1.6B vision model for edge use. Performs impressive object detection and visual question answering with minimal resource usage.',
-    icon_url: 'https://avatars.githubusercontent.com/u/149426408?s=200&v=4' // GitHub Project Avatar
+    icon_url: 'https://avatars.githubusercontent.com/u/149426408?s=200&v=4'
   },
   {
     id: 'ollama-minicpm-v',
@@ -223,70 +258,12 @@ export function seedDB() {
     series: 'MiniCPM',
     performance_tier: 'Turbo / Nano',
     size_mb: 5500,
+    min_memory_mb: 6144, // ปรับขึ้นจาก 4096
+    rec_memory_mb: 8192,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'A powerful compact multimodal model. Excels at OCR and detailed image description, often outperforming larger 7B models.',
-    icon_url: 'https://avatars.githubusercontent.com/u/101234275?s=200&v=4' // OpenBMB GitHub Avatar
-  },
-  {
-    id: 'ollama-llava-7b',
-    engine: 'ollama',
-    name: 'llava:7b',
-    display_name: 'LLaVA 7B',
-    category: 'Vision',
-    series: 'LLaVA',
-    performance_tier: 'Balanced',
-    size_mb: 4500,
-    description: 'Powerful vision-language assistant. Combines visual understanding with NLP to describe images, read text, and answer complex visual queries.',
-    icon_url: 'https://www.llava-vl.com/images/llava_logo.png' // Official LLaVA
-  },
-  {
-    id: 'ollama-qwen2-vl',
-    engine: 'ollama',
-    name: 'qwen2-vl',
-    display_name: 'Qwen2-VL (7B)',
-    category: 'Vision',
-    series: 'Qwen',
-    performance_tier: 'Balanced',
-    size_mb: 5000,
-    description: 'State-of-the-art vision language model. Capable of understanding videos of up to 20 minutes and high-resolution images with complex reasoning.',
-    icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png'
-  },
-  {
-    id: 'ollama-llama3.2-vision-11b',
-    engine: 'ollama',
-    name: 'llama3.2-vision:11b',
-    display_name: 'Llama 3.2 Vision (11B)',
-    category: 'Vision',
-    series: 'Llama',
-    performance_tier: 'High Precision',
-    size_mb: 7900,
-    description: 'Meta\'s cutting-edge multimodal model. Seamlessly integrates high-fidelity visual understanding, OCR, and reasoning for professional analysis.',
-    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/1/18/Llama_AI_logo.svg'
-  },
-
-  // ============= CODING MODELS =============
-  {
-    id: 'ollama-codeqwen-1.5b',
-    engine: 'ollama',
-    name: 'codeqwen:1.5b',
-    display_name: 'CodeQwen (1.5B)',
-    category: 'Chat',
-    series: 'Qwen',
-    performance_tier: 'Turbo / Nano',
-    size_mb: 900,
-    description: 'Specialized lightweight coding model. Delivers fast code completion and debugging across multiple languages with very low latency.',
-    icon_url: 'https://sf-maas.s3.us-east-1.amazonaws.com/Model_LOGO/Tongyi.png'
-  },
-  {
-    id: 'ollama-deepseek-coder-6.7b',
-    engine: 'ollama',
-    name: 'deepseek-coder:6.7b',
-    display_name: 'DeepSeek Coder (6.7B)',
-    category: 'Chat',
-    series: 'DeepSeek',
-    performance_tier: 'Balanced',
-    size_mb: 3800,
-    description: 'Top-tier coding model trained on massive repos. Excels at complex algorithm implementation, system design, and production-ready code generation.',
-    icon_url: 'https://avatars.githubusercontent.com/u/145223814?s=200&v=4' // DeepSeek Bear Avatar
+    icon_url: 'https://avatars.githubusercontent.com/u/101234275?s=200&v=4'
   },
 
   // ============= AUDIO MODELS =============
@@ -299,8 +276,12 @@ export function seedDB() {
     series: 'Whisper',
     performance_tier: 'Turbo / Nano',
     size_mb: 75,
+    min_memory_mb: 512,
+    rec_memory_mb: 1024,
+    min_cpu_cores: 1,
+    rec_cpu_cores: 2,
     description: 'OpenAI\'s smallest speech model. Optimized for ultra-fast, real-time transcription on resource-constrained devices.',
-    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/OpenAI_Whisper_logo.svg/200px-OpenAI_Whisper_logo.svg.png' // Whisper Specific Logo
+    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/OpenAI_Whisper_logo.svg/200px-OpenAI_Whisper_logo.svg.png'
   },
   {
     id: 'whisper-medium',
@@ -311,19 +292,11 @@ export function seedDB() {
     series: 'Whisper',
     performance_tier: 'Balanced',
     size_mb: 1500,
+    min_memory_mb: 2048,
+    rec_memory_mb: 4096,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'High-accuracy speech recognition model. Excellently handles background noise, accents, and technical terminology for professional use.',
-    icon_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/OpenAI_Whisper_logo.svg/200px-OpenAI_Whisper_logo.svg.png'
-  },
-  {
-    id: 'whisper-large-v3',
-    engine: 'whisper',
-    name: 'large-v3',
-    display_name: 'Whisper Large v3',
-    category: 'Audio',
-    series: 'Whisper',
-    performance_tier: 'High Precision',
-    size_mb: 3100,
-    description: 'The state-of-the-art open speech recognition model. Offers unmatched accuracy across multiple languages and challenging audio environments.',
     icon_url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/OpenAI_Whisper_logo.svg/200px-OpenAI_Whisper_logo.svg.png'
   },
 
@@ -337,8 +310,12 @@ export function seedDB() {
     series: 'Stable Diffusion',
     performance_tier: 'Turbo / Nano',
     size_mb: 800,
+    min_memory_mb: 2048,
+    rec_memory_mb: 4096,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'The fastest generation method available. Enables near real-time 1-4 step image creation even on standard CPUs.',
-    icon_url: 'https://stability.ai/s/images/logo.svg' // Stability AI Logo
+    icon_url: 'https://stability.ai/s/images/logo.svg'
   },
   {
     id: 'playground-v2-cpu',
@@ -349,20 +326,12 @@ export function seedDB() {
     series: 'Playground',
     performance_tier: 'Balanced',
     size_mb: 3200,
+    min_memory_mb: 4096,
+    rec_memory_mb: 8192,
+    min_cpu_cores: 2,
+    rec_cpu_cores: 4,
     description: 'Optimized for high aesthetic quality. Produces vibrant colors and artistic styles with excellent lighting and composition.',
     icon_url: 'https://playground.com/favicon.ico'
-  },
-  {
-    id: 'sd-xl-turbo',
-    engine: 'stable-diffusion',
-    name: 'sdxl-turbo',
-    display_name: 'SDXL Turbo',
-    category: 'Image',
-    series: 'Stable Diffusion',
-    performance_tier: 'Balanced',
-    size_mb: 6900,
-    description: 'Revolutionary real-time model. Generates detailed, high-resolution 1024x1024 images in a single step with high prompt adherence.',
-    icon_url: 'https://stability.ai/s/images/logo.svg'
   }
 ];
 
@@ -371,7 +340,7 @@ export function seedDB() {
     );
 
     const insertModels = db.prepare(
-      "INSERT OR IGNORE INTO models (id, engine, name, display_name, category, series, performance_tier, size_mb, description, icon_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT OR IGNORE INTO models (id, engine, name, display_name, category, series, performance_tier, size_mb, min_memory_mb, rec_memory_mb, min_cpu_cores, rec_cpu_cores, description, icon_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     const seedTransaction = db.transaction(() => {
@@ -388,6 +357,10 @@ export function seedDB() {
           model.series,
           model.performance_tier,
           model.size_mb,
+          model.min_memory_mb,
+          model.rec_memory_mb,
+          model.min_cpu_cores,
+          model.rec_cpu_cores,
           model.description,
           model.icon_url
         );
