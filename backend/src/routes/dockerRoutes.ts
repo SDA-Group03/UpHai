@@ -11,7 +11,10 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       return { success: false, error: "userId is required" };
     }
 
-    const result = await createContainerByEngine(body);
+    const result = await createContainerByEngine({
+      ...body,
+      resourceConfig: body.resourceConfig,
+    });
     set.status = 201;
     return {
       success: true,
@@ -23,6 +26,11 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       userId: t.String(),
       engine: t.String(),
       modelName: t.String(),
+      resourceConfig: t.Optional(t.Object({
+        memoryMb: t.Number(),
+        autoStopMinutes: t.Union([t.Number(), t.Null()]),
+        // cpuCores not implemented on backend
+      })),
     }),
   })
 

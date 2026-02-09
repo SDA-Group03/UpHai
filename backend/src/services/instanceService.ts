@@ -9,6 +9,9 @@ export interface CreateInstanceData {
   containerName: string;
   containerId: string;
   port: number;
+  allocatedMemoryMb?: number;
+  // allocatedCpuCores?: number; // TODO: implement backend support
+  autoStopMinutes?: number | null;
 }
 
 export class InstanceService {
@@ -21,6 +24,9 @@ export class InstanceService {
       containerName: data.containerName,
       port: data.port,
       status: "running",
+      allocatedMemoryMb: data.allocatedMemoryMb,
+      // allocatedCpuCores: data.allocatedCpuCores, // TODO: implement backend support
+      autoStopMinutes: data.autoStopMinutes,
       createdAt: new Date(), 
       lastActivity: new Date(),
     }).returning();
@@ -40,16 +46,19 @@ export class InstanceService {
         userId: instances.userId,
         engineId: instances.engineId,
         modelId: instances.modelId,
-        modelName: models.name, // <-- get the model name
+        modelName: models.name,
         modelCategory: models.category,
         containerName: instances.containerName,
         port: instances.port,
         status: instances.status,
+        allocatedMemoryMb: instances.allocatedMemoryMb,
+        // allocatedCpuCores: instances.allocatedCpuCores, // TODO: implement backend support
+        autoStopMinutes: instances.autoStopMinutes,
         createdAt: instances.createdAt,
         lastActivity: instances.lastActivity,
       })
       .from(instances)
-      .leftJoin(models, eq(instances.modelId, models.id)) // join models table
+      .leftJoin(models, eq(instances.modelId, models.id))
       .where(eq(instances.userId, userId))
       .orderBy(desc(instances.createdAt));
 
@@ -60,16 +69,17 @@ export class InstanceService {
     const [result] = await db.update(instances)
       .set({
         ...data,
-lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(),      })
+        lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(),
+      })
       .where(eq(instances.id, id))
       .returning();
 
     return result;
   }
 
-    async deleteInstance(id: string) {
-      await db.delete(instances).where(eq(instances.id, id));
-    }
+  async deleteInstance(id: string) {
+    await db.delete(instances).where(eq(instances.id, id));
+  }
 }
 
 export const instanceService = new InstanceService();

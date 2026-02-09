@@ -10,23 +10,34 @@ export interface InstanceResult {
   engine: string;
 }
 
+export interface ResourceConfig {
+  memoryMb: number;
+  autoStopMinutes: number | null;
+  // cpuCores not implemented on backend
+}
+
 export interface CreateInstanceOptions {
   modelName: string;
   engine: string;
   userId: string;
+  resourceConfig?: ResourceConfig;
 }
 
 export const createContainerByEngine = async (options: CreateInstanceOptions): Promise<InstanceResult> => {
-  const { modelName, engine, userId } = options;
+  const { modelName, engine, userId, resourceConfig } = options;
 
   const models = await modelService.searchModels(modelName);
   const model = models.find(m => m.name === modelName && m.engine === engine);
 
   if (!model) throw new Error(`Model '${modelName}' not found for engine '${engine}'`);
 
+  // Use provided config or fall back to recommended values
+  const memoryMb = resourceConfig?.memoryMb ?? model.recMemoryMb ?? 2048;
+  const autoStopMinutes = resourceConfig?.autoStopMinutes ?? 30;
+
   const engineMap: Record<string, () => Promise<any>> = {
-    ollama: () => createOllamaInstance(modelName),
-    whisper: () => createWhisperInstance(modelName),
+    ollama: () => createOllamaInstance(modelName, memoryMb),
+    whisper: () => createWhisperInstance(modelName, memoryMb),
   };
 
   const createFn = engineMap[engine.toLowerCase()];
@@ -41,6 +52,9 @@ export const createContainerByEngine = async (options: CreateInstanceOptions): P
     containerName: `${engine}-${modelName}-${result.containerId.substring(0, 8)}`,
     containerId: result.containerId,
     port: parseInt(result.port),
+    allocatedMemoryMb: memoryMb,
+    // allocatedCpuCores: cpuCores, // TODO: implement backend support
+    autoStopMinutes: autoStopMinutes,
   });
 
   return result;

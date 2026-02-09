@@ -4,6 +4,11 @@ export type DeployModelPayload = {
   userId: string;
   engine: string;
   modelName: string;
+  resourceConfig?: {
+    memoryMb: number;
+    autoStopMinutes: number | null;
+    // cpuCores is not sent to backend (frontend mock only)
+  };
 };
 
 export async function deployModel(payload: DeployModelPayload) {
