@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Box, MessageSquare, Image, Mic, Key, FileText, ExternalLink, ScanEye, LayoutDashboard } from "lucide-react";
+import { Box, MessageSquare, Mic, Key, FileText, ExternalLink, ScanEye, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 

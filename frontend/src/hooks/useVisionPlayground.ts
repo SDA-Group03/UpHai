@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getUserInstances } from '@/services/dockerService';
 import { fetchProfile } from '@/services/authService';
-import { checkOllamaHealth } from '@/services/chatService';
 import ax from '@/conf/ax';
 import type { Message as VisionMessage } from '@/lib/types';
 
