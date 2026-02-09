@@ -100,7 +100,7 @@ async function fetchModels(): Promise<ModelData[]> {
       series: inst.engine || inst.series || "Custom",
       size: inst.size || "Standard",
       status: (inst.status as ModelStatus) || "stopped",
-      endpoint: inst.endpoint || "Pending...",
+      endpoint: `http://${window.location.hostname}:${inst.port}/api/chat` || "Pending...",
       uptime: inst.uptime || "0s",
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
