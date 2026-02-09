@@ -92,6 +92,20 @@ export function initDB() {
     );
   `);
 
+  // 6. สร้างตาราง API Keys (ไม่ drop — key ต้องคงอยู่)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS api_keys (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      key_hash TEXT UNIQUE NOT NULL,
+      key_prefix TEXT NOT NULL,
+      created_at INTEGER DEFAULT (strftime('%s', 'now')),
+      last_used_at INTEGER,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+
   seedDB();
   console.log("✅ Database ready!");
 }
