@@ -34,4 +34,5 @@ export interface ResourceConfig {
   memoryMb: number;
   cpuCores: number;
   autoStopMinutes: number | null;
+  containerName?: string;
 }

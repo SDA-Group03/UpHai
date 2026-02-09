@@ -4,6 +4,7 @@ export type DeployModelPayload = {
   userId: string;
   engine: string;
   modelName: string;
+  containerName?: string;
   resourceConfig?: {
     memoryMb: number;
     autoStopMinutes: number | null;

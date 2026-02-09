@@ -45,12 +45,14 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
   const [memoryMb, setMemoryMb] = useState(model.recMemoryMb);
   const [cpuCores, setCpuCores] = useState(mockCpu.recCpuCores);
   const [autoStopMinutes, setAutoStopMinutes] = useState<number | null>(30);
+  const [containerName, setContainerName] = useState<string>("");
 
   const handleDeploy = () => {
     onDeploy({
       memoryMb,
       cpuCores,
       autoStopMinutes,
+      containerName: containerName.trim() ? containerName.trim() : undefined,
     });
   };
 
@@ -80,6 +82,24 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
         </SheetHeader>
 
         <div className="space-y-6">
+          {/* Container Name */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold">Container Name (optional)</Label>
+            <Input
+              value={containerName}
+              onChange={(e) => setContainerName(e.target.value)}
+              placeholder={`e.g. ${model.engine}-${model.name.replace(/[^A-Za-z0-9_.-]+/g, '-')}`}
+              className="h-10"
+            />
+            <p className="text-xs text-slate-500">
+              Allowed characters: letters, numbers, <span className="font-mono">.</span>{" "}
+              <span className="font-mono">_</span>{" "}
+              <span className="font-mono">-</span>. Must start with a letter or number.
+            </p>
+          </div>
+
+          <Separator />
+
           {/* Memory Configuration */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -242,6 +262,10 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
             <div className="flex justify-between">
               <span className="text-slate-600">CPU:</span>
               <span className="font-medium">{cpuCores} vCPU</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-600">Container:</span>
+              <span className="font-medium">{containerName.trim() ? containerName.trim() : "Auto"}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-600">Auto-stop:</span>

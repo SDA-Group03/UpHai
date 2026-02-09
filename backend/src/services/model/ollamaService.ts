@@ -40,7 +40,8 @@ const waitForService = async (port: string) => {
 
 export const createOllamaInstance = async (
   modelName = "qwen:0.5b",
-  memoryMb = 4096
+  memoryMb = 4096,
+  containerName?: string
 ): Promise<ChatInstanceResult> => {
   await ensureImage();
 
@@ -48,15 +49,18 @@ export const createOllamaInstance = async (
   // CPU allocation not implemented yet
 
   const container = await docker.createContainer({
-    Image: "ollama/ollama",
-    Tty: true,
-    HostConfig: {
-      PortBindings: { "11434/tcp": [{ HostPort: "" }] },
-      Memory: memoryBytes,
-      // NanoCpus: nanoCpus, // TODO: implement CPU allocation
-      Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
+    ...(containerName ? { _query: { name: containerName } } : {}),
+    _body: {
+      Image: "ollama/ollama",
+      Tty: true,
+      HostConfig: {
+        PortBindings: { "11434/tcp": [{ HostPort: "" }] },
+        Memory: memoryBytes,
+        // NanoCpus: nanoCpus, // TODO: implement CPU allocation
+        Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
+      },
     },
-  });
+  } as any);
 
   await container.start();
   const data = await container.inspect();

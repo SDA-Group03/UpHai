@@ -11,21 +11,30 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       return { success: false, error: "userId is required" };
     }
 
-    const result = await createContainerByEngine({
-      ...body,
-      resourceConfig: body.resourceConfig,
-    });
-    set.status = 201;
-    return {
-      success: true,
-      data: result,
-      message: `${body.engine}/${body.modelName} deployed`,
-    };
+    try {
+      const result = await createContainerByEngine({
+        ...body,
+        resourceConfig: body.resourceConfig,
+      });
+      set.status = 201;
+      return {
+        success: true,
+        data: result,
+        message: `${body.engine}/${body.modelName} deployed`,
+      };
+    } catch (err: any) {
+      set.status = 400;
+      return {
+        success: false,
+        error: err?.message || "Failed to deploy instance",
+      };
+    }
   }, {
     body: t.Object({
       userId: t.String(),
       engine: t.String(),
       modelName: t.String(),
+      containerName: t.Optional(t.String()),
       resourceConfig: t.Optional(t.Object({
         memoryMb: t.Number(),
         autoStopMinutes: t.Union([t.Number(), t.Null()]),

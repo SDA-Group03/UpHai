@@ -46,6 +46,7 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
         userId: String(user.id),
         engine: model.engine,
         modelName: model.name,
+        containerName: config.containerName,
         resourceConfig: {
           memoryMb: config.memoryMb,
           autoStopMinutes: config.autoStopMinutes,
