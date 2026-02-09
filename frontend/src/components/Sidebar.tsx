@@ -63,7 +63,7 @@ export const Sidebar = ({ isOpen }: SidebarProps) => {
         <MenuGroup title="Dashboard">
           <MenuItem
             icon={LayoutDashboard}
-            label="Deployed Models"
+            label="Instances"
             to="/dashboard/deployed"
             active={location.pathname === "/dashboard/deployed"}
           ></MenuItem>

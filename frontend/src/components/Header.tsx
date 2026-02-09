@@ -1,7 +1,7 @@
-import { Menu, Globe, LogOut } from 'lucide-react';
+import { Menu, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCurrentUser } from '../services/authService';
+import { useCurrentUser } from "../services/authService";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -29,17 +28,14 @@ export const Header = ({ toggleSidebar }: HeaderProps) => {
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Language Switcher */}
-        <Button variant="ghost" size="sm" className="flex items-center gap-1 text-slate-500 hover:text-[#6E29F6]">
-          <Globe size={16} />
-          <span>EN</span>
-        </Button>
-
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="w-9 h-9 cursor-pointer border-2 border-white shadow-md hover:shadow-lg transition-shadow">
-              <AvatarImage src="https://lh3.googleusercontent.com/a/ACg8ocJ3ilDgcsIfVnYqK-DuXuMD5q8aCpkP4s9JHgRcAh7EQu2WlBk=s96-c" alt="User" />
+              <AvatarImage
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Default_pfp.svg/960px-Default_pfp.svg.png"
+                alt="User"
+              />
               <AvatarFallback>US</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
