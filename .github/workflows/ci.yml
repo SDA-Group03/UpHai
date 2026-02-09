@@ -89,7 +89,7 @@ jobs:
             cat <<EOF > .env
             PORT=3000
             CORS_ORIGIN=http://${{ secrets.HOST }}
-            OLLAMA_SERVICE_HOST=host.docker.internal
+            DOCKER_NETWORK=uphai_default
             EOF
             
             # สร้างไฟล์ docker-compose.yml สำหรับ Production

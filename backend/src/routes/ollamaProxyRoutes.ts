@@ -1,7 +1,5 @@
 import { Elysia } from 'elysia';
-
-const DOCKER_NETWORK = process.env.DOCKER_NETWORK || '';
-const PROXY_HOST = DOCKER_NETWORK ? 'host.docker.internal' : '127.0.0.1';
+import { resolveUpstream } from './proxyUtils';
 
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -19,7 +17,8 @@ export const ollamaProxyRoutes = new Elysia({ prefix: '/api/ollama' })
     }
 
     try {
-      const res = await fetch(`http://${PROXY_HOST}:${port}/api/tags`, {
+      const url = await resolveUpstream(port, '/api/tags');
+      const res = await fetch(url, {
         signal: AbortSignal.timeout(5000),
       });
       return { ok: res.ok };
@@ -37,7 +36,8 @@ export const ollamaProxyRoutes = new Elysia({ prefix: '/api/ollama' })
 
     try {
       const body = await request.json();
-      const upstream = await fetch(`http://${PROXY_HOST}:${port}/api/chat`, {
+      const url = await resolveUpstream(port, '/api/chat');
+      const upstream = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -48,7 +48,6 @@ export const ollamaProxyRoutes = new Elysia({ prefix: '/api/ollama' })
         return { error: `Ollama error: ${upstream.status} ${upstream.statusText}` };
       }
 
-      // Stream response back to client
       return new Response(upstream.body, {
         status: upstream.status,
         headers: {
