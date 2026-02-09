@@ -13,17 +13,20 @@ export interface CreateInstanceData {
 
 export class InstanceService {
   async createInstance(data: CreateInstanceData) {
-    const [result] = await db.insert(instances).values({
-      id: data.containerId,
-      userId: data.userId,
-      engineId: data.engineId,
-      modelId: data.modelId,
-      containerName: data.containerName,
-      port: data.port,
-      status: "running",
-      createdAt: new Date(), 
-      lastActivity: new Date(),
-    }).returning();
+    const [result] = await db
+      .insert(instances)
+      .values({
+        id: data.containerId,
+        userId: data.userId,
+        engineId: data.engineId,
+        modelId: data.modelId,
+        containerName: data.containerName,
+        port: data.port,
+        status: "running",
+        createdAt: new Date(),
+        lastActivity: new Date(),
+      })
+      .returning();
 
     return result;
   }
@@ -56,21 +59,21 @@ export class InstanceService {
   }
 
   async updateInstance(id: string, data: { status?: string; lastActivity?: number }) {
-    const [result] = await db.update(instances)
+    const [result] = await db
+      .update(instances)
       .set({
         ...data,
-lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(),      })
+        lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(),
+      })
       .where(eq(instances.id, id))
       .returning();
 
     return result;
   }
 
-    async deleteInstance(id: string) {
-
-      // await db.delete(instances).where(eq(instances.id, id));
-
-    }
+  async deleteInstance(id: string) {
+    await db.delete(instances).where(eq(instances.id, id));
+  }
 }
 
 export const instanceService = new InstanceService();
