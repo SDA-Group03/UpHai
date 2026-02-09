@@ -1,5 +1,8 @@
 import { Elysia } from 'elysia';
 
+const DOCKER_NETWORK = process.env.DOCKER_NETWORK || '';
+const PROXY_HOST = DOCKER_NETWORK ? 'host.docker.internal' : '127.0.0.1';
+
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
   const port = typeof value === 'string' ? Number(value) : typeof value === 'number' ? value : NaN;
@@ -25,7 +28,7 @@ async function proxyWhisperMultipart(
     formData.append(key, value as any);
   }
 
-  const upstream = await fetch(`http://127.0.0.1:${port}${path}`, {
+  const upstream = await fetch(`http://${PROXY_HOST}:${port}${path}`, {
     method: 'POST',
     body: formData,
   });
@@ -68,7 +71,7 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const res = await fetch(`http://127.0.0.1:${port}/`, { signal: controller.signal });
+      const res = await fetch(`http://${PROXY_HOST}:${port}/`, { signal: controller.signal });
       clearTimeout(timeoutId);
       return { ok: res.ok };
     } catch (error: any) {

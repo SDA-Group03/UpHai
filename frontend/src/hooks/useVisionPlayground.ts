@@ -2,7 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useInterval } from 'react-use';
 import { getUserInstances } from '@/services/dockerService';
 import { fetchProfile } from '@/services/authService';
+import { checkOllamaHealth } from '@/services/chatService';
 import type { Message as VisionMessage } from '@/lib/types';
+
+const normalizeApiOrigin = (value: string) => {
+  const normalized = value.trim().replace(/\/+$/, '');
+  return normalized.endsWith('/api') ? normalized.slice(0, -4) : normalized;
+};
+
+const apiOrigin = normalizeApiOrigin(import.meta.env.VITE_API_URL ?? '');
+const OLLAMA_PROXY_BASE_URL = `${apiOrigin}/api/ollama`;
 
 export interface VisionInstance {
   id: string;
@@ -310,16 +319,7 @@ export const useVisionPlayground = () => {
     fetchInstances();
   }, []);
 
-  const checkHealth = async (port: number): Promise<boolean> => {
-    try {
-      const response = await fetch(
-        `http://${window.location.hostname}:${port}/api/tags`
-      );
-      return response.ok;
-    } catch {
-      return false;
-    }
-  };
+  const checkHealth = (port: number) => checkOllamaHealth(port);
 
   useInterval(
     () => {
@@ -405,7 +405,7 @@ export const useVisionPlayground = () => {
       });
 
       const response = await fetch(
-        `http://${window.location.hostname}:${selectedInstance.port}/api/chat`,
+        `${OLLAMA_PROXY_BASE_URL}/chat?port=${selectedInstance.port}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
