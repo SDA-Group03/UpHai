@@ -1,10 +1,9 @@
+import ax from '@/conf/ax';
+
 /**
  * Whisper API Service with CORS handling
  * OpenAI-compatible API for transcription and translation
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-const WHISPER_PROXY_BASE_URL = `${API_BASE_URL}/whisper`;
 
 export interface TranscriptionOptions {
   model?: string;
@@ -55,49 +54,42 @@ export async function transcribeAudio(
   const isStreaming = options.stream === true;
   if (isStreaming) formData.append('stream', 'true');
 
+  const url = '/whisper/v1/audio/transcriptions';
+
   try {
-    const response = await fetch(`${WHISPER_PROXY_BASE_URL}/audio/transcriptions?port=${port}`, {
-      method: 'POST',
-      body: formData,
-      mode: 'cors',
-      credentials: 'omit',
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
-      try {
-        const errorData = await response.text();
-        if (errorData) {
-          errorMessage += ` - ${errorData}`;
-        }
-      } catch (e) {
-        // Ignore parse error
-      }
-      
-      throw new Error(errorMessage);
-    }
-
-    // Handle streaming response
-    if (isStreaming && response.body) {
-      return handleStreamingResponse(response.body, onChunk);
+    if (isStreaming) {
+      return await handleAxiosStreamingRequest(url, formData, port, onChunk);
     }
 
     // Handle non-streaming response
-    const contentType = response.headers.get('content-type') || '';
-    
-    if (contentType.includes('application/json')) {
-      return await response.json();
+    const response = await ax.post(url, formData, {
+      params: { port },
+      validateStatus: () => true,
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      const errorData = response.data;
+      if (errorData) {
+        errorMessage += ` - ${typeof errorData === 'string' ? errorData : JSON.stringify(errorData)}`;
+      }
+      throw new Error(errorMessage);
     }
     
-    // Plain text response
-    const text = await response.text();
+    if (typeof response.data === 'object' && response.data !== null) {
+      return response.data;
+    }
+    
+    const text = String(response.data);
     return { text };
 
-  } catch (error) {
-    // Enhanced error handling
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error(`Cannot connect to Whisper service (port ${port}) via backend proxy. Is the backend running?`);
+  } catch (error: any) {
+    if (error.isAxiosError && !error.response) {
+      throw new Error(`Cannot connect to Whisper service on port ${port}. Is the container running or backend proxy available?`);
+    }
+    if (error.isAxiosError) {
+      const message = error.response?.data?.error || error.response?.data || error.message;
+      throw new Error(String(message));
     }
     throw error;
   }
@@ -126,109 +118,114 @@ export async function translateAudio(
   const isStreaming = options.stream === true;
   if (isStreaming) formData.append('stream', 'true');
 
+  const url = '/whisper/v1/audio/translations';
+
   try {
-    const response = await fetch(`${WHISPER_PROXY_BASE_URL}/audio/translations?port=${port}`, {
-      method: 'POST',
-      body: formData,
-      mode: 'cors',
-      credentials: 'omit',
+    if (isStreaming) {
+      return await handleAxiosStreamingRequest(url, formData, port, onChunk);
+    }
+
+    const response = await ax.post(url, formData, {
+      params: { port },
+      validateStatus: () => true,
     });
 
-    if (!response.ok) {
+    if (response.status < 200 || response.status >= 300) {
       let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      
-      try {
-        const errorData = await response.text();
-        if (errorData) {
-          errorMessage += ` - ${errorData}`;
-        }
-      } catch (e) {
-        // Ignore
+      const errorData = response.data;
+      if (errorData) {
+        errorMessage += ` - ${typeof errorData === 'string' ? errorData : JSON.stringify(errorData)}`;
       }
-      
       throw new Error(errorMessage);
     }
 
-    if (isStreaming && response.body) {
-      return handleStreamingResponse(response.body, onChunk);
-    }
-
-    const contentType = response.headers.get('content-type') || '';
-    
-    if (contentType.includes('application/json')) {
-      return await response.json();
+    if (typeof response.data === 'object' && response.data !== null) {
+      return response.data;
     }
     
-    const text = await response.text();
+    const text = String(response.data);
     return { text };
 
-  } catch (error) {
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error(`Cannot connect to Whisper service (port ${port}) via backend proxy. Is the backend running?`);
+  } catch (error: any) {
+    if (error.isAxiosError && !error.response) {
+      throw new Error(`Cannot connect to Whisper service on port ${port}. Is the container running or backend proxy available?`);
+    }
+    if (error.isAxiosError) {
+      const message = error.response?.data?.error || error.response?.data || error.message;
+      throw new Error(String(message));
     }
     throw error;
   }
 }
 
 /**
- * Handle Server-Sent Events (SSE) streaming response
+ * Handle streaming request via Axios with onDownloadProgress
  */
-async function handleStreamingResponse(
-  body: ReadableStream<Uint8Array>,
+async function handleAxiosStreamingRequest(
+  url: string,
+  formData: FormData,
+  port: number,
   onChunk?: (text: string) => void
 ): Promise<TranscriptionResponse> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
   let buffer = '';
   let fullText = '';
+  let lastResponseLength = 0;
 
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) break;
+  const processChunk = (text: string) => {
+    buffer += text;
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      
-      // Keep the last incomplete line in buffer
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        
-        // SSE format: "data: {json}" or just text chunks
-        if (trimmed.startsWith('data: ')) {
-          const data = trimmed.substring(6);
-          
-          if (data === '[DONE]') continue;
-          
-          try {
-            const parsed = JSON.parse(data);
-            const text = parsed.text || parsed.chunk || '';
-            if (text) {
-              fullText += text;
-              if (onChunk) onChunk(text);
-            }
-          } catch {
-            // If not JSON, treat as plain text
-            if (data) {
-              fullText += data;
-              if (onChunk) onChunk(data);
-            }
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('data: ')) {
+        const data = trimmed.substring(6);
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const chunkText = parsed.text || parsed.chunk || '';
+          if (chunkText) {
+            fullText += chunkText;
+            if (onChunk) onChunk(chunkText);
           }
-        } else if (trimmed && !trimmed.startsWith(':')) {
-          // Plain text chunk (not SSE comment)
-          fullText += trimmed;
-          if (onChunk) onChunk(trimmed);
+        } catch {
+          if (data) {
+            fullText += data;
+            if (onChunk) onChunk(data);
+          }
         }
+      } else if (trimmed && !trimmed.startsWith(':')) {
+        fullText += trimmed;
+        if (onChunk) onChunk(trimmed);
       }
     }
+  };
 
-    return { text: fullText };
-  } finally {
-    reader.releaseLock();
+  const response = await ax.post(url, formData, {
+    params: { port },
+    responseType: 'text',
+    transformResponse: v => v,
+    validateStatus: () => true,
+    onDownloadProgress: (pe: any) => {
+      const xhr = pe?.event?.currentTarget as XMLHttpRequest | undefined;
+      const responseText = xhr?.responseText;
+      if (typeof responseText !== 'string') return;
+      const chunk = responseText.substring(lastResponseLength);
+      lastResponseLength = responseText.length;
+      if (chunk) processChunk(chunk);
+    },
+  });
+
+  if (response.status < 200 || response.status >= 300) {
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    if (response.data) {
+      errorMessage += ` - ${response.data}`;
+    }
+    throw new Error(errorMessage);
   }
+
+  if (buffer.trim()) processChunk('\n');
+  return { text: fullText };
 }
 
 /**
@@ -236,20 +233,12 @@ async function handleStreamingResponse(
  */
 export async function checkWhisperHealth(port: number): Promise<boolean> {
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
-    const response = await fetch(`${WHISPER_PROXY_BASE_URL}/health?port=${port}`, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      signal: controller.signal,
+    const response = await ax.get('/whisper/health', {
+      params: { port },
+      timeout: 5000,
+      validateStatus: () => true,
     });
-    
-    clearTimeout(timeoutId);
-    if (!response.ok) return false;
-    const data = await response.json().catch(() => null);
-    return Boolean(data?.ok);
+    return response.status >= 200 && response.status < 300;
   } catch (error) {
     console.error(`Health check failed for port ${port}:`, error);
     return false;
