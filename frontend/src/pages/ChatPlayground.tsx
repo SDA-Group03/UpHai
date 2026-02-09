@@ -20,6 +20,7 @@ interface UserInstance {
   id: string;
   modelId: string;
   modelName: string | null;
+  modelCategory?: string | null;
   containerName: string;
   port: number;
   status: string;
@@ -59,9 +60,12 @@ export default function ChatPlayground() {
         if (user) {
           const response = await getUserInstances(user.id.toString(), { engineId: 'ollama' });
           if (response.success) {
-            const instances = Array.isArray(response.data) ? response.data : [];
-            setUserInstances(instances);
-            setSelectedInstance(instances[0] || null);
+            const instances = Array.isArray(response.data) ? (response.data as UserInstance[]) : [];
+            const chatInstances = instances.filter(
+              (inst) => String(inst.modelCategory ?? '').toLowerCase() === 'chat'
+            );
+            setUserInstances(chatInstances);
+            setSelectedInstance(chatInstances[0] || null);
           }
         }
       } catch (error) {
