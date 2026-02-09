@@ -12,7 +12,6 @@ export function initDB() {
   console.log("📂 Initializing Database...");
 
   // Drop tables for a clean slate in development.
-  db.run(`DROP TABLE IF EXISTS instances;`);
   db.run(`DROP TABLE IF EXISTS models;`);
   db.run(`DROP TABLE IF EXISTS engines;`);
 

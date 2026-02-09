@@ -67,9 +67,7 @@ lastActivity: data.lastActivity ? new Date(data.lastActivity * 1000) : new Date(
   }
 
     async deleteInstance(id: string) {
-
-      // await db.delete(instances).where(eq(instances.id, id));
-
+      await db.delete(instances).where(eq(instances.id, id));
     }
 }
 
