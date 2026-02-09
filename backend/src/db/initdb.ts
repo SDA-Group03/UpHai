@@ -11,9 +11,23 @@ export const db = new Database("data/voke.sqlite", { create: true });
 export function initDB() {
   console.log("📂 Initializing Database...");
 
-  db.run(`DROP TABLE IF EXISTS engines;`);
+  // ลบตารางเดิมออกก่อน (เรียงลำดับจากตารางที่มี Foreign Key ออกก่อน)
+  db.run(`DROP TABLE IF EXISTS refresh_tokens;`);
+  db.run(`DROP TABLE IF EXISTS instances;`);
   db.run(`DROP TABLE IF EXISTS models;`);
+  db.run(`DROP TABLE IF EXISTS engines;`);
+  db.run(`DROP TABLE IF EXISTS users;`);
 
+  // 1. สร้างตาราง Users (ตารางหลัก)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL
+    );
+  `);
+
+  // 2. สร้างตาราง Engines
   db.run(`
     CREATE TABLE IF NOT EXISTS engines (
       id TEXT PRIMARY KEY,
@@ -26,6 +40,7 @@ export function initDB() {
     );
   `);
 
+  // 3. สร้างตาราง Models
   db.run(`
     CREATE TABLE IF NOT EXISTS models (
       id TEXT PRIMARY KEY,
@@ -46,10 +61,25 @@ export function initDB() {
     );
   `);
 
+  // 4. สร้างตาราง Refresh Tokens (อ้างอิง User)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token_hash TEXT UNIQUE NOT NULL,
+      created_at INTEGER NOT NULL,
+      expires_at INTEGER NOT NULL,
+      revoked_at INTEGER,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
+  db.run(`CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens (user_id);`);
+
+  // 5. สร้างตาราง Instances (อ้างอิง Users, Engines, Models)
   db.run(`
     CREATE TABLE IF NOT EXISTS instances (
       id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
       engine_id TEXT NOT NULL,
       model_id TEXT NOT NULL,
       container_name TEXT NOT NULL,
@@ -60,28 +90,10 @@ export function initDB() {
       auto_stop_minutes INTEGER,
       created_at INTEGER DEFAULT (strftime('%s', 'now')),
       last_activity INTEGER DEFAULT (strftime('%s', 'now')),
-      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (engine_id) REFERENCES engines(id),
       FOREIGN KEY (model_id) REFERENCES models(id)
     );
-  `);
-
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS refresh_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      token_hash TEXT UNIQUE NOT NULL,
-      created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL,
-      revoked_at INTEGER,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-    CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens (user_id);
   `);
 
   seedDB();
