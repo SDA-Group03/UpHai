@@ -5,6 +5,7 @@ import { Layout } from "@/layouts/Layout";
 import { LoadingPage } from "@/components/LoadingPage";
 import Dashboard from "@/pages/Deployed";
 import AudioPlayground from "@/pages/AudioPlayground";
+import VisionPlayground from "@/pages/VisionPlayground";
 // Lazy-loaded pages
 const LoginPage = lazy(() => import("@/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/RegisterPage"));

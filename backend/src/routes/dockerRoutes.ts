@@ -73,7 +73,7 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       lastActivity: Date.now(),
     });
 
-    return { success: true, data: { ...dbInstance, container: containerInfo } };
+    return { success: true, data: { ...(dbInstance ?? {}), container: containerInfo } };
   })
   .get("/instances/:id/stats", async ({ params, set }) => {
     const stats = await container.getContainerStats(params.id);
