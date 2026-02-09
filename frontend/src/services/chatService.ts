@@ -135,6 +135,29 @@ export async function sendMessageSimple(
 /**
  * สร้าง unique ID สำหรับข้อความ
  */
+/**
+ * Check if Ollama service is healthy
+ */
+export async function checkOllamaHealth(port: number | string): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`http://${window.location.hostname}:${port}/api/tags`, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    return response.ok;
+  } catch (error) {
+    console.error(`Health check failed for port ${port}:`, error);
+    return false;
+  }
+}
+
 export function generateMessageId(): string {
   return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }
