@@ -31,6 +31,7 @@ export const authRoutes = new Elysia({ prefix: '/api/auth' })
   .post(
     '/register',
     ({ body, set }) => {
+      console.log('Register body:', body);
       const username = body.username.trim();
       if (username.length < 3) {
         set.status = 400;
