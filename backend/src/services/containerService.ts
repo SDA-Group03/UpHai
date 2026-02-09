@@ -1,9 +1,7 @@
 import Docker from "dockerode";
 
 const docker = new Docker(
-  process.platform === "win32" 
-    ? { host: "127.0.0.1", port: 2375 } 
-    : { socketPath: "/var/run/docker.sock" }
+  process.platform === "win32" ? { host: "127.0.0.1", port: 2375 } : { socketPath: "/var/run/docker.sock" },
 );
 
 export interface ContainerStats {
@@ -28,11 +26,17 @@ export interface ContainerInfo {
 }
 
 export const stopContainer = async (id: string) => {
-  await docker.getContainer(id).stop({ t: 10 }).catch(() => {});
+  await docker
+    .getContainer(id)
+    .stop({ t: 10 })
+    .catch(() => {});
 };
 
 export const startContainer = async (id: string) => {
-  await docker.getContainer(id).start().catch(() => {});
+  await docker
+    .getContainer(id)
+    .start()
+    .catch(() => {});
 };
 
 export const restartContainer = async (id: string) => {
@@ -48,13 +52,12 @@ export const removeContainer = async (id: string, force = false) => {
 export const getContainerInfo = async (id: string): Promise<ContainerInfo | null> => {
   try {
     const data = await docker.getContainer(id).inspect();
-    const ports = Object.entries(data.NetworkSettings.Ports || {})
-      .flatMap(([port, bindings]: any) => 
-        (bindings || []).map((b: any) => ({
-          container: parseInt(port),
-          host: parseInt(b.HostPort)
-        }))
-      );
+    const ports = Object.entries(data.NetworkSettings.Ports || {}).flatMap(([port, bindings]: any) =>
+      (bindings || []).map((b: any) => ({
+        container: parseInt(port),
+        host: parseInt(b.HostPort),
+      })),
+    );
 
     return {
       id: data.Id.substring(0, 12),
@@ -74,10 +77,7 @@ export const getContainerInfo = async (id: string): Promise<ContainerInfo | null
 export const getContainerStats = async (id: string): Promise<ContainerStats | null> => {
   try {
     const container = docker.getContainer(id);
-    const [info, stats] = await Promise.all([
-      container.inspect(),
-      container.stats({ stream: false })
-    ]);
+    const [info, stats] = await Promise.all([container.inspect(), container.stats({ stream: false })]);
 
     const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
     const systemDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
@@ -99,15 +99,13 @@ export const getContainerStats = async (id: string): Promise<ContainerStats | nu
 
 export const listContainers = async (all = true, filter?: string): Promise<ContainerInfo[]> => {
   const containers = await docker.listContainers({ all });
-  const filtered = filter 
-    ? containers.filter(c => 
-        c.Image.includes(filter) || 
-        c.Names.some(n => n.includes(filter)) || 
-        c.Id.includes(filter)
+  const filtered = filter
+    ? containers.filter(
+        (c) => c.Image.includes(filter) || c.Names.some((n) => n.includes(filter)) || c.Id.includes(filter),
       )
     : containers;
 
-  return filtered.map(c => ({
+  return filtered.map((c) => ({
     id: c.Id.substring(0, 12),
     name: c.Names[0]?.replace(/^\//, "") || "Unnamed",
     image: c.Image,
@@ -128,8 +126,7 @@ export const cleanupIdleContainers = async (maxIdleMinutes = 30): Promise<string
   for (const c of containers) {
     const info = await docker.getContainer(c.Id).inspect();
     const idleMinutes = (Date.now() - new Date(info.State.StartedAt).getTime()) / 60000;
-    const isManaged = ["ollama", "whisper", "stable-diffusion"]
-      .some(name => info.Config.Image.includes(name));
+    const isManaged = ["ollama", "whisper", "stable-diffusion"].some((name) => info.Config.Image.includes(name));
 
     if (isManaged && idleMinutes > maxIdleMinutes) {
       await removeContainer(c.Id, true).catch(() => {});
@@ -145,7 +142,7 @@ const formatUptime = (ms: number): string => {
   const m = Math.floor(s / 60);
   const h = Math.floor(m / 60);
   const d = Math.floor(h / 24);
-  
+
   if (d > 0) return `${d}d ${h % 24}h`;
   if (h > 0) return `${h}h ${m % 60}m`;
   if (m > 0) return `${m}m ${s % 60}s`;
