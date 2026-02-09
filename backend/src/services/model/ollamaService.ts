@@ -69,26 +69,31 @@ export const createOllamaInstance = async (modelName = "qwen:0.5b"): Promise<Cha
 
   await container.start();
 
-  // ถ้ามี DOCKER_NETWORK → connect container เข้า network เดียวกับ backend
-  // แล้ว health check ผ่าน container IP ภายใน network ตรงๆ (ไม่ผ่าน host port)
+  let hostPort: string;
+  let serviceHost: string;
+  const servicePort = 11434;
+
   if (DOCKER_NETWORK) {
     const network = docker.getNetwork(DOCKER_NETWORK);
     await network.connect({ Container: container.id });
     const data = await container.inspect();
     const containerIp = data.NetworkSettings.Networks[DOCKER_NETWORK]?.IPAddress;
     if (!containerIp) throw new Error("Container IP not found on network");
-    await waitForService(containerIp, 11434);
-    await pullModel(containerIp, 11434, modelName);
-    const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "11434";
-    return { containerId: container.id, port, model: modelName };
+    hostPort = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "11434";
+    serviceHost = containerIp;
+  } else {
+    const data = await container.inspect();
+    hostPort = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort || "";
+    if (!hostPort) throw new Error("Port not found");
+    serviceHost = "localhost";
   }
 
-  // local dev: ไม่มี DOCKER_NETWORK → ใช้ host port ตามเดิม
-  const data = await container.inspect();
-  const port = data.NetworkSettings.Ports["11434/tcp"]?.[0]?.HostPort;
-  if (!port) throw new Error("Port not found");
-  await waitForService("localhost", port);
-  await pullModel("localhost", port, modelName);
+  // ทำ background — ไม่ block response กลับ frontend
+  // frontend มี health check poll ทุก 30 วิ จะรู้เองว่าพร้อมใช้เมื่อไหร่
+  waitForService(serviceHost, servicePort)
+    .then(() => pullModel(serviceHost, servicePort, modelName))
+    .then(() => console.log(`[ollama] Model '${modelName}' ready (port ${hostPort})`))
+    .catch((err) => console.error(`[ollama] Setup failed (port ${hostPort}):`, err));
 
-  return { containerId: container.id, port, model: modelName };
+  return { containerId: container.id, port: hostPort, model: modelName };
 };
