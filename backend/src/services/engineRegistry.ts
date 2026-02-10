@@ -14,8 +14,8 @@ export interface InstanceResult {
 
 export interface ResourceConfig {
   memoryMb: number;
+  cpuCores?: number;
   autoStopMinutes: number | null;
-  // cpuCores not implemented on backend
 }
 
 export interface CreateInstanceOptions {
@@ -47,8 +47,13 @@ export const createContainerByEngine = async (options: CreateInstanceOptions): P
 
   // Use provided config or fall back to recommended values
   const memoryMb = resourceConfig?.memoryMb ?? model.recMemoryMb ?? 2048;
+  const cpuCores = resourceConfig?.cpuCores ?? model.recCpuCores ?? 1;
   // Important: `null` means "never auto-stop" so we must not coalesce it to the default.
   const autoStopMinutes = resourceConfig?.autoStopMinutes === undefined ? 30 : resourceConfig.autoStopMinutes;
+
+  if (!Number.isFinite(cpuCores) || cpuCores <= 0) {
+    throw new Error(`Invalid cpuCores '${cpuCores}'`);
+  }
 
   const engineKey = engine.toLowerCase();
   const safeModelPart = sanitizeContainerName(modelName) || "model";
@@ -65,8 +70,8 @@ export const createContainerByEngine = async (options: CreateInstanceOptions): P
   }
 
   const engineMap: Record<string, () => Promise<any>> = {
-    ollama: () => createOllamaInstance(modelName, memoryMb, finalContainerName),
-    whisper: () => createWhisperInstance(modelName, memoryMb, finalContainerName),
+    ollama: () => createOllamaInstance(modelName, memoryMb, cpuCores, finalContainerName),
+    whisper: () => createWhisperInstance(modelName, memoryMb, cpuCores, finalContainerName),
   };
 
   const createFn = engineMap[engineKey];
@@ -82,7 +87,7 @@ export const createContainerByEngine = async (options: CreateInstanceOptions): P
     containerId: result.containerId,
     port: parseInt(result.port),
     allocatedMemoryMb: memoryMb,
-    // allocatedCpuCores: cpuCores, // TODO: implement backend support
+    allocatedCpuCores: cpuCores,
     autoStopMinutes: autoStopMinutes,
   });
 

@@ -45,12 +45,17 @@ const waitForService = async (host: string, port: string | number) => {
 export const createWhisperInstance = async (
   modelName = "base",
   memoryMb = 2048,
+  cpuCores?: number,
   containerName?: string
 ): Promise<WhisperInstanceResult> => {
   await ensureImage();
 
   const memoryBytes = memoryMb * 1024 * 1024;
-  // CPU allocation not implemented yet
+
+  if (cpuCores !== undefined && (!Number.isFinite(cpuCores) || cpuCores <= 0)) {
+    throw new Error(`Invalid cpuCores '${cpuCores}'`);
+  }
+  const nanoCpus = cpuCores === undefined ? undefined : Math.round(cpuCores * 1_000_000_000);
 
   const container = await docker.createContainer({
     ...(containerName ? { _query: { name: containerName } } : {}),
@@ -61,7 +66,7 @@ export const createWhisperInstance = async (
       HostConfig: {
         PortBindings: { "8000/tcp": [{ HostPort: "" }] },
         Memory: memoryBytes,
-        // NanoCpus: nanoCpus, // TODO: implement CPU allocation
+        NanoCpus: nanoCpus,
         Binds: [`${WHISPER_VOLUME}:/root/.cache/whisper:ro`],
       },
     },

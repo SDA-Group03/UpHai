@@ -41,7 +41,6 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
         return;
       }
       
-      // Only send memory and auto-stop to backend (CPU is frontend mock only)
       const payload = {
         userId: String(user.id),
         engine: model.engine,
@@ -49,6 +48,7 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
         containerName: config.containerName,
         resourceConfig: {
           memoryMb: config.memoryMb,
+          cpuCores: config.cpuCores,
           autoStopMinutes: config.autoStopMinutes,
         },
       };
@@ -67,7 +67,7 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
     if (!model) return;
     handleDeployWithConfig({
       memoryMb: model.recMemoryMb,
-      cpuCores: 2, // Mock value, not sent to backend
+      cpuCores: model.recCpuCores,
       autoStopMinutes: 30,
     });
   };
@@ -134,11 +134,11 @@ export const ModelDetailsSheet = ({ model, isOpen, onClose }: ModelDetailsSheetP
                     <Separator className="my-2" />
                     <div className="flex justify-between">
                       <span className="text-slate-600">Min CPU:</span>
-                      <span className="font-medium">{model.minMemoryMb >= 4096 ? 2 : 1} vCPU</span>
+                      <span className="font-medium">{model.minCpuCores} vCPU</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-600">Recommended CPU:</span>
-                      <span className="font-medium text-[#6E29F6]">{model.recMemoryMb >= 4096 ? 4 : 2} vCPU </span>
+                      <span className="font-medium text-[#6E29F6]">{model.recCpuCores} vCPU </span>
                     </div>
                   </div>
                 </div>

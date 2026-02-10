@@ -37,8 +37,8 @@ export const dockerRoutes = new Elysia({ prefix: "/api/docker" })
       containerName: t.Optional(t.String()),
       resourceConfig: t.Optional(t.Object({
         memoryMb: t.Number(),
+        cpuCores: t.Optional(t.Number()),
         autoStopMinutes: t.Union([t.Number(), t.Null()]),
-        // cpuCores not implemented on backend
       })),
     }),
   })

@@ -32,18 +32,9 @@ interface ResourceConfigSheetProps {
 const MEMORY_OPTIONS = [512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192]; 
 const CPU_OPTIONS = [0.5, 1, 1.5, 2,2.5,3,3.5, 4]; 
 
-// Mock CPU values for UI only (not from backend)
-const getMockCpuValues = (model: ModelData) => {
-  // Simple heuristic based on memory requirements
-  const minCpu = model.minMemoryMb >= 4096 ? 2 : 1;
-  const recCpu = model.recMemoryMb >= 4096 ? 4 : 2;
-  return { minCpuCores: minCpu, recCpuCores: recCpu };
-};
-
 export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: ResourceConfigSheetProps) => {
-  const mockCpu = getMockCpuValues(model);
   const [memoryMb, setMemoryMb] = useState(model.recMemoryMb);
-  const [cpuCores, setCpuCores] = useState(mockCpu.recCpuCores);
+  const [cpuCores, setCpuCores] = useState(model.recCpuCores);
   const [autoStopMinutes, setAutoStopMinutes] = useState<number | null>(30);
   const [containerName, setContainerName] = useState<string>("");
 
@@ -68,8 +59,8 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
 
   const isMemoryBelowMin = memoryMb < model.minMemoryMb;
   const isMemoryBelowRec = memoryMb < model.recMemoryMb;
-  const isCpuBelowMin = cpuCores < mockCpu.minCpuCores;
-  const isCpuBelowRec = cpuCores < mockCpu.recCpuCores;
+  const isCpuBelowMin = cpuCores < model.minCpuCores;
+  const isCpuBelowRec = cpuCores < model.recCpuCores;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -172,12 +163,12 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
                   className="w-20 h-8 text-right"
                 />
                 <span className="text-sm text-slate-500">vCPU</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCpuCores(mockCpu.recCpuCores)}
-                  className="h-8 px-2"
-                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setCpuCores(model.recCpuCores)}
+                    className="h-8 px-2"
+                  >
                   <Zap className="h-3 w-3 mr-1" />
                   Recommended
                 </Button>
@@ -193,8 +184,8 @@ export const ResourceConfigSheet = ({ model, isOpen, onClose, onDeploy }: Resour
             />
 
             <div className="flex justify-between text-xs text-slate-500">
-              <span>Min ({mockCpu.minCpuCores} vCPU)</span>
-              <span className="text-[#6E29F6] font-medium">Rec ({mockCpu.recCpuCores} vCPU)</span>
+              <span>Min ({model.minCpuCores} vCPU)</span>
+              <span className="text-[#6E29F6] font-medium">Rec ({model.recCpuCores} vCPU)</span>
               <span>Max ({CPU_OPTIONS[CPU_OPTIONS.length - 1]} vCPU)</span>
             </div>
 

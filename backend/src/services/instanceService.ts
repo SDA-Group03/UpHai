@@ -10,7 +10,7 @@ export interface CreateInstanceData {
   containerId: string;
   port: number;
   allocatedMemoryMb?: number;
-  // allocatedCpuCores?: number; // TODO: implement backend support
+  allocatedCpuCores?: number;
   autoStopMinutes?: number | null;
 }
 
@@ -25,7 +25,7 @@ export class InstanceService {
       port: data.port,
       status: "running",
       allocatedMemoryMb: data.allocatedMemoryMb,
-      // allocatedCpuCores: data.allocatedCpuCores, // TODO: implement backend support
+      allocatedCpuCores: data.allocatedCpuCores,
       autoStopMinutes: data.autoStopMinutes,
       createdAt: new Date(), 
       lastActivity: new Date(),
@@ -52,7 +52,7 @@ export class InstanceService {
         port: instances.port,
         status: instances.status,
         allocatedMemoryMb: instances.allocatedMemoryMb,
-        // allocatedCpuCores: instances.allocatedCpuCores, // TODO: implement backend support
+        allocatedCpuCores: instances.allocatedCpuCores,
         autoStopMinutes: instances.autoStopMinutes,
         createdAt: instances.createdAt,
         lastActivity: instances.lastActivity,

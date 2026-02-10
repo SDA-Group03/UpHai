@@ -44,12 +44,17 @@ const waitForService = async (host: string, port: string | number) => {
 export const createOllamaInstance = async (
   modelName = "qwen:0.5b",
   memoryMb = 4096,
+  cpuCores?: number,
   containerName?: string
 ): Promise<ChatInstanceResult> => {
   await ensureImage();
 
   const memoryBytes = memoryMb * 1024 * 1024;
-  // CPU allocation not implemented yet
+
+  if (cpuCores !== undefined && (!Number.isFinite(cpuCores) || cpuCores <= 0)) {
+    throw new Error(`Invalid cpuCores '${cpuCores}'`);
+  }
+  const nanoCpus = cpuCores === undefined ? undefined : Math.round(cpuCores * 1_000_000_000);
 
   const container = await docker.createContainer({
     ...(containerName ? { _query: { name: containerName } } : {}),
@@ -59,7 +64,7 @@ export const createOllamaInstance = async (
       HostConfig: {
         PortBindings: { "11434/tcp": [{ HostPort: "" }] },
         Memory: memoryBytes,
-        // NanoCpus: nanoCpus, // TODO: implement CPU allocation
+        NanoCpus: nanoCpus,
         Binds: [`${OLLAMA_VOLUME}:/root/.ollama:ro`],
       },
     },

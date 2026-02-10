@@ -7,8 +7,8 @@ export type DeployModelPayload = {
   containerName?: string;
   resourceConfig?: {
     memoryMb: number;
+    cpuCores: number;
     autoStopMinutes: number | null;
-    // cpuCores is not sent to backend (frontend mock only)
   };
 };
 
