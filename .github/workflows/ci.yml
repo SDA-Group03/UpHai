@@ -88,7 +88,7 @@ jobs:
             # 1. สร้างไฟล์ .env (รวมตัวแปรทั้งหมดไว้ที่นี่)
             cat <<EOF > .env
             PORT=3000
-            CORS_ORIGIN=http://${{ secrets.HOST }}
+            CORS_ORIGIN=https://uphai.npspst.xyz
             DOCKER_NETWORK=uphai_default
             EOF
             
@@ -115,7 +115,7 @@ jobs:
                 container_name: uphai-frontend
                 restart: always
                 ports:
-                  - "80:80"
+                  - "3001:80"
                 depends_on:
                   - backend
             EOF

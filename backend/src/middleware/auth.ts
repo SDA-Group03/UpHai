@@ -1,4 +1,5 @@
 import { verifyAccessToken } from '../services/auth.js';
+import { validateApiKey } from '../services/apiKeyService.js';
 
 type HeaderBag = Record<string, string | undefined>;
 
@@ -20,6 +21,17 @@ export function checkAccessToken(headers: HeaderBag): AccessTokenCheck {
   if (!token) {
     return { ok: false, reason: 'missing' };
   }
+
+  // API key path: sk-uphai-...
+  if (token.startsWith('sk-uphai-')) {
+    const user = validateApiKey(token);
+    if (!user) {
+      return { ok: false, reason: 'invalid' };
+    }
+    return { ok: true, user };
+  }
+
+  // JWT path
   const payload = verifyAccessToken(token);
   if (!payload) {
     return { ok: false, reason: 'invalid' };
