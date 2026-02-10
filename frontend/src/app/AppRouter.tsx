@@ -12,6 +12,7 @@ const RegisterPage = lazy(() => import("@/pages/RegisterPage"));
 const HomePage = lazy(() => import("@/pages/HomePage"));
 const ModelsPage = lazy(() => import("../pages/ModelsPage").then((module) => ({ default: module.ModelsPage })));
 const ChatPlayground = lazy(() => import("@/pages/ChatPlayground"));
+const ApiKeysPage = lazy(() => import("@/pages/ApiKeysPage"));
 export function AppRouter() {
   return (
     <BrowserRouter>
@@ -50,6 +51,14 @@ export function AppRouter() {
               element={
                 <Layout>
                   <AudioPlayground />
+                </Layout>
+              }
+            />
+            <Route
+              path="/settings/api-keys"
+              element={
+                <Layout>
+                  <ApiKeysPage />
                 </Layout>
               }
             />
