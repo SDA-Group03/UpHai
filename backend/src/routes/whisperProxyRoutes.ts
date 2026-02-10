@@ -71,7 +71,7 @@ export const whisperProxyRoutes = new Elysia({ prefix: '/api/whisper' })
     try {
       const url = await resolveUpstream(port, '/');
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const res = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       return { ok: res.ok };

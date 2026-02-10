@@ -132,7 +132,20 @@ export default function ChatPlayground() {
       content: '',
     });
 
-    // Prepare messages for API (include system prompt if exists)
+    // Prepare messages for API using a sliding window of the last 5 messages.
+    // This keeps the context relevant and the payload small.
+    const conversationHistory = [
+      ...messages,
+      {
+        id: 'temp-user-message',
+        role: 'user' as const,
+        content: userMessage,
+        timestamp: Date.now(),
+      },
+    ];
+
+    const apiHistory = conversationHistory.slice(Math.max(0, conversationHistory.length - 5));
+
     const apiMessages = [
       ...(systemPrompt ? [{ 
         id: 'system', 
@@ -140,13 +153,7 @@ export default function ChatPlayground() {
         content: systemPrompt,
         timestamp: Date.now()
       }] : []),
-      ...messages,
-      {
-        id: 'temp',
-        role: 'user' as const,
-        content: userMessage,
-        timestamp: Date.now()
-      }
+      ...apiHistory,
     ];
 
     const options: ChatOptions = {

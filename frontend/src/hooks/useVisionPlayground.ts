@@ -404,17 +404,14 @@ export const useVisionPlayground = () => {
     setMessages((prev) => [...prev, userMsg, assistantMsg]);
 
     try {
-      const apiMessages: OllamaMessage[] = messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-        ...(msg.images && msg.images.length > 0 ? { images: msg.images } : {}),
-      }));
-
-      apiMessages.push({
-        role: 'user',
-        content: contentToSend,
-        ...(imagesToSend.length > 0 ? { images: imagesToSend } : {}),
-      });
+      // Stateless: do not send chat history; only send the current turn.
+      const apiMessages: OllamaMessage[] = [
+        {
+          role: 'user',
+          content: contentToSend,
+          ...(imagesToSend.length > 0 ? { images: imagesToSend } : {}),
+        },
+      ];
 
       let lastResponseLength = 0;
       let buffer = '';

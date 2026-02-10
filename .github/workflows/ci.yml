@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -44,22 +44,24 @@ jobs:
     if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/uphai-frontend:latest
+          build-args: |
+            VITE_API_URL=https://uphai.npspst.xyz
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5
@@ -84,14 +86,14 @@ jobs:
             # สร้างโฟลเดอร์โปรเจกต์
             mkdir -p ~/uphai
             cd ~/uphai
-            
+
             # 1. สร้างไฟล์ .env (รวมตัวแปรทั้งหมดไว้ที่นี่)
             cat <<EOF > .env
             PORT=3000
             CORS_ORIGIN=https://uphai.npspst.xyz
             DOCKER_NETWORK=uphai_default
             EOF
-            
+
             # สร้างไฟล์ docker-compose.yml สำหรับ Production
             # (ใช้ Image จาก Docker Hub แทนการ Build เอง)
             cat <<EOF > docker-compose.yml
@@ -109,7 +111,7 @@ jobs:
                 env_file: .env
                 extra_hosts:
                   - "host.docker.internal:host-gateway"
-            
+
               frontend:
                 image: ${{ secrets.DOCKER_USERNAME }}/uphai-frontend:latest
                 container_name: uphai-frontend
@@ -119,7 +121,7 @@ jobs:
                 depends_on:
                   - backend
             EOF
-            
+
             # ดึง Image ใหม่และเริ่มทำงาน
             docker compose pull
             docker compose up -d
