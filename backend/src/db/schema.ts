@@ -52,6 +52,18 @@ export const models = sqliteTable("models", {
   createdAt: integer("created_at", { mode: "timestamp" }),
 });
 
+export const apiKeys = sqliteTable("api_keys", {
+  id: text("id").primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  keyHash: text("key_hash").notNull().unique(),
+  keyPrefix: text("key_prefix").notNull(),
+  createdAt: integer("created_at"),
+  lastUsedAt: integer("last_used_at"),
+});
+
 export const instances = sqliteTable("instances", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => users.id), 

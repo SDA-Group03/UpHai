@@ -321,12 +321,13 @@ export const useVisionPlayground = () => {
 
   const checkHealth = async (port: number): Promise<boolean> => {
     try {
-      const response = await ax.get('/ollama/tags', {
+      const response = await ax.get('/ollama/health', {
         params: { port },
         timeout: 5000,
         validateStatus: () => true,
       });
-      return response.status >= 200 && response.status < 300;
+      if (response.status < 200 || response.status >= 300) return false;
+      return Boolean((response.data as any)?.ok);
     } catch {
       return false;
     }

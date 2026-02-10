@@ -1,4 +1,10 @@
 import type { Message } from "@/lib/types";
+import { getAccessToken } from './authService';
+
+function authHeaders(): Record<string, string> {
+    const token = getAccessToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 const normalizeApiOrigin = (value: string) => {
     const normalized = value.trim().replace(/\/+$/, '');
@@ -25,7 +31,7 @@ export const streamVisionChat = async (
 ): Promise<void> => {
     const response = await fetch(`${OLLAMA_PROXY_BASE_URL}/chat?port=${port}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(payload),
     });
 

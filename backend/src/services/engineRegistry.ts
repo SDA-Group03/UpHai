@@ -47,7 +47,8 @@ export const createContainerByEngine = async (options: CreateInstanceOptions): P
 
   // Use provided config or fall back to recommended values
   const memoryMb = resourceConfig?.memoryMb ?? model.recMemoryMb ?? 2048;
-  const autoStopMinutes = resourceConfig?.autoStopMinutes ?? 30;
+  // Important: `null` means "never auto-stop" so we must not coalesce it to the default.
+  const autoStopMinutes = resourceConfig?.autoStopMinutes === undefined ? 30 : resourceConfig.autoStopMinutes;
 
   const engineKey = engine.toLowerCase();
   const safeModelPart = sanitizeContainerName(modelName) || "model";

@@ -1,5 +1,6 @@
 import { Elysia } from 'elysia';
 import { resolveUpstream } from './proxyUtils';
+import { instanceService } from '../services/instanceService';
 
 const parsePort = (raw: unknown): number | null => {
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -33,6 +34,8 @@ export const ollamaProxyRoutes = new Elysia({ prefix: '/api/ollama' })
       set.status = 400;
       return { error: 'Invalid port' };
     }
+
+    void instanceService.touchInstanceByPort(port).catch(() => {});
 
     try {
       const body = await request.json();
