@@ -92,6 +92,14 @@ export function initDB() {
     );
   `);
 
+  // Repair: older code accidentally stored `last_activity` in milliseconds (but the column is unix seconds).
+  // Safe because unix seconds won't exceed 10,000,000,000 until year 2286.
+  db.run(`
+    UPDATE instances
+    SET last_activity = CAST(last_activity / 1000 AS INTEGER)
+    WHERE last_activity > 10000000000;
+  `);
+  
   // 6. สร้างตาราง API Keys (ไม่ drop — key ต้องคงอยู่)
   db.run(`
     CREATE TABLE IF NOT EXISTS api_keys (
@@ -130,7 +138,7 @@ export function seedDB() {
       },
     ];
 
-    const models = [
+   const models = [
       // ============= CHAT MODELS - TURBO / NANO =============
       {
         id: 'ollama-qwen2-0.5b',
@@ -196,12 +204,12 @@ export function seedDB() {
         min_cpu_cores: 2,
         rec_cpu_cores: 4,
         description: 'Meta\'s optimized 3B model for efficient deployment. Delivers excellent speed and quality with improved instruction following and multilingual support.',
-        icon_url: 'https://pbs.twimg.com/profile_images/2007231966857375744/hjKASQJE_400x400.jpg' // Using HEAD icon
+        icon_url: 'https://pbs.twimg.com/profile_images/2007231966857375744/hjKASQJE_400x400.jpg'
       },
       {
         id: 'ollama-phi3-3.8b',
         engine: 'ollama',
-        name: 'phi3:3.8b',
+        name: 'phi3:mini',
         display_name: 'Phi-3 (3.8B)',
         category: 'Chat',
         series: 'Phi',
@@ -212,7 +220,7 @@ export function seedDB() {
         min_cpu_cores: 2,
         rec_cpu_cores: 4,
         description: 'Microsoft\'s powerful small model. Excels in reasoning, coding, and math, often rivaling larger models despite its compact size.',
-        icon_url: 'https://www.blognone.com/sites/default/files/topics-images/microsoft_logo.svg_.png' // Using HEAD icon
+        icon_url: 'https://www.blognone.com/sites/default/files/topics-images/microsoft_logo.svg_.png'
       },
       {
         id: 'ollama-mistral-7b',
@@ -228,7 +236,7 @@ export function seedDB() {
         min_cpu_cores: 2,
         rec_cpu_cores: 4,
         description: 'A benchmark 7B model known for efficiency. Uses sliding window attention to deliver exceptional reasoning and general knowledge performance.',
-        icon_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_DaHGtoqrk8iozc9mWeQ8_1RXcxTlRI_dWA&s' // Using HEAD icon
+        icon_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_DaHGtoqrk8iozc9mWeQ8_1RXcxTlRI_dWA&s'
       },
       {
         id: 'ollama-llama3.1-8b',
@@ -244,7 +252,7 @@ export function seedDB() {
         min_cpu_cores: 2,
         rec_cpu_cores: 4,
         description: 'Meta\'s enhanced 8B model with 128k context support. Features superior reasoning, tool use capability, and robustness in complex multi-turn conversations.',
-        icon_url: 'https://pbs.twimg.com/profile_images/2007231966857375744/hjKASQJE_400x400.jpg' // Using HEAD icon
+        icon_url: 'https://pbs.twimg.com/profile_images/2007231966857375744/hjKASQJE_400x400.jpg'
       },
 
       // ============= CHAT MODELS - HIGH PRECISION =============
@@ -262,7 +270,7 @@ export function seedDB() {
         min_cpu_cores: 4,
         rec_cpu_cores: 4,
         description: 'Efficient Mixture-of-Experts (MoE) model. Matches 70B-level performance with faster inference, excelling in multilingual tasks and complex reasoning.',
-        icon_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_DaHGtoqrk8iozc9mWeQ8_1RXcxTlRI_dWA&s' // Using HEAD icon
+        icon_url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS_DaHGtoqrk8iozc9mWeQ8_1RXcxTlRI_dWA&s'
       },
 
       // ============= VISION MODELS =============
@@ -314,7 +322,7 @@ export function seedDB() {
         min_cpu_cores: 1,
         rec_cpu_cores: 2,
         description: 'OpenAI\'s smallest speech model. Optimized for ultra-fast, real-time transcription on resource-constrained devices.',
-        icon_url: 'https://miro.medium.com/v2/1*4l07m-rV0ZepWJ3n7ECC9w.png' // Using HEAD icon
+        icon_url: 'https://miro.medium.com/v2/1*4l07m-rV0ZepWJ3n7ECC9w.png'
       },
       {
         id: 'whisper-medium',
@@ -330,41 +338,7 @@ export function seedDB() {
         min_cpu_cores: 2,
         rec_cpu_cores: 4,
         description: 'High-accuracy speech recognition model. Excellently handles background noise, accents, and technical terminology for professional use.',
-        icon_url: 'https://miro.medium.com/v2/1*4l07m-rV0ZepWJ3n7ECC9w.png' // Using HEAD icon
-      },
-
-      // ============= IMAGE GENERATION =============
-      {
-        id: 'lcm-lora',
-        engine: 'stable-diffusion',
-        name: 'lcm-sd-1.5',
-        display_name: 'LCM LoRA (Ultra Fast)',
-        category: 'Image',
-        series: 'Stable Diffusion',
-        performance_tier: 'Turbo / Nano',
-        size_mb: 800,
-        min_memory_mb: 2048,
-        rec_memory_mb: 4096,
-        min_cpu_cores: 2,
-        rec_cpu_cores: 4,
-        description: 'The fastest generation method available. Enables near real-time 1-4 step image creation even on standard CPUs.',
-        icon_url: 'https://logoyab.com/wp-content/uploads/2025/06/Stable-Diffusion-Logo-1030x1030.png' // Using HEAD icon
-      },
-      {
-        id: 'playground-v2-cpu',
-        engine: 'stable-diffusion',
-        name: 'playground-v2',
-        display_name: 'Playground v2 (Best Aesthetics)',
-        category: 'Image',
-        series: 'Playground',
-        performance_tier: 'Balanced',
-        size_mb: 3200,
-        min_memory_mb: 4096,
-        rec_memory_mb: 8192,
-        min_cpu_cores: 2,
-        rec_cpu_cores: 4,
-        description: 'Optimized for high aesthetic quality. Produces vibrant colors and artistic styles with excellent lighting and composition.',
-        icon_url: 'https://playground.com/favicon.ico'
+        icon_url: 'https://miro.medium.com/v2/1*4l07m-rV0ZepWJ3n7ECC9w.png'
       }
     ];
 
