@@ -189,7 +189,7 @@ async function fetchModels(): Promise<ModelData[]> {
       series: inst.engine || inst.series || "Custom",
       size: inst.size || "Standard",
       status: (inst.status as ModelStatus) || "stopped",
-      endpoint: `${window.location.origin}/api/ollama/chat?port=${inst.port}`,
+      endpoint: `${import.meta.env.API_URL || "http://localhost:3000"}/api/ollama/chat?port=${inst.port}`,
       uptime: inst.uptime || "0s",
       lastActive: inst.lastActive || "Recently",
       categories: inst.categories || "AI Model",
