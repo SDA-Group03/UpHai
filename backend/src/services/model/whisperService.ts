@@ -77,7 +77,8 @@ export const createWhisperInstance = async (
     const containerIp = data.NetworkSettings.Networks[DOCKER_NETWORK]?.IPAddress;
     if (!containerIp) throw new Error("Container IP not found on network");
     await waitForService(containerIp, 8000);
-    const port = data.NetworkSettings.Ports["8000/tcp"]?.[0]?.HostPort || "8000";
+    const port = data.NetworkSettings.Ports["8000/tcp"]?.[0]?.HostPort;
+    if (!port) throw new Error("Host port not found after container start");
     return { containerId: container.id, port, model: modelName };
   }
 
