@@ -60,6 +60,8 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/uphai-frontend:latest
+          build-args: |
+            VITE_API_URL=https://uphai.npspst.xyz
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5
@@ -87,7 +89,6 @@ jobs:
 
             # 1. สร้างไฟล์ .env (รวมตัวแปรทั้งหมดไว้ที่นี่)
             cat <<EOF > .env
-            VITE_API_URL=https://uphai.npspst.xyz
             PORT=3000
             CORS_ORIGIN=https://uphai.npspst.xyz
             DOCKER_NETWORK=uphai_default
