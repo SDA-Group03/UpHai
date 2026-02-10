@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   backend:
     build: ./backend
@@ -8,6 +8,8 @@ services:
       - "3000:3000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./backend/data:/app/data
+
     environment:
       - PORT=3000
       - CORS_ORIGIN=http://localhost
@@ -23,3 +25,6 @@ services:
       - "80:80"
     depends_on:
       - backend
+
+volumes:
+  uphai_db_data:
