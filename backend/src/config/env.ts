@@ -17,7 +17,7 @@ export const ACCESS_TOKEN_SECRET =
 export const REFRESH_TOKEN_COOKIE_NAME =
   process.env.REFRESH_TOKEN_COOKIE_NAME ?? 'refreshToken';
 export const REFRESH_TOKEN_COOKIE_PATH =
-  process.env.REFRESH_TOKEN_COOKIE_PATH ?? '/auth';
+  process.env.REFRESH_TOKEN_COOKIE_PATH ?? '/api/auth';
 
 const envSameSite = process.env.REFRESH_TOKEN_COOKIE_SAMESITE;
 export const REFRESH_TOKEN_COOKIE_SAMESITE =
