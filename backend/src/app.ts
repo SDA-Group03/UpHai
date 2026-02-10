@@ -10,22 +10,22 @@ import { apiKeyRoutes } from './routes/apiKeyRoutes.ts';
 import { CORS_ORIGIN } from './config/env.ts';
 
 export const app = new Elysia()
-  // ==================================
- .use(logger()) 
+//   // ==================================
+//  .use(logger()) 
 
-  .onBeforeHandle(({ request, body }) => {
-    if (body) {
-      console.log(`📦 [Request Body to ${new URL(request.url).pathname}]:`, JSON.stringify(body, null, 2));
-    }
-  })
-  .onAfterResponse(({ path, response }) => {
-    if (response && typeof response === 'object') {
-      console.log(`✨ [Response from ${path}]:`, JSON.stringify(response, null, 2));
-    } else {
-      console.log(`✨ [Response from ${path}]:`, response);
-    }
-  })
-  // ==================================
+//   .onBeforeHandle(({ request, body }) => {
+//     if (body) {
+//       console.log(`📦 [Request Body to ${new URL(request.url).pathname}]:`, JSON.stringify(body, null, 2));
+//     }
+//   })
+//   .onAfterResponse(({ path, response }) => {
+//     if (response && typeof response === 'object') {
+//       console.log(`✨ [Response from ${path}]:`, JSON.stringify(response, null, 2));
+//     } else {
+//       console.log(`✨ [Response from ${path}]:`, response);
+//     }
+//   })
+//   // ==================================
   .use(cors({
     origin: CORS_ORIGIN,
     credentials: true,
